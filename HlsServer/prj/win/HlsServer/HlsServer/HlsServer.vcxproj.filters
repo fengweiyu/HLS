@@ -1,0 +1,101 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="demo">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="src\include">
+      <UniqueIdentifier>{8bd8094a-83b0-48ab-9499-3b952dd611c2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ThirdSrc">
+      <UniqueIdentifier>{a394218d-826e-4333-a6a4-214f2c9b16ef}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ThirdSrc\http">
+      <UniqueIdentifier>{0a5aa395-2422-4a9a-aa76-c085a67b0464}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ThirdSrc\http\include">
+      <UniqueIdentifier>{221ec2ae-685f-472a-a892-63a7671b8a29}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="demo\net">
+      <UniqueIdentifier>{80be86db-aee1-486d-8efe-641adc6137f2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="demo\net\include">
+      <UniqueIdentifier>{22e2fb08-ed9a-4ef8-8e6d-e5542226140b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\..\src\HlsServer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\HlsServerInf.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\HlsServerSession.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\ThirdSrc\http\Http.cpp">
+      <Filter>src\ThirdSrc\http</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\ThirdSrc\http\HttpClient.cpp">
+      <Filter>src\ThirdSrc\http</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\ThirdSrc\http\HttpServer.cpp">
+      <Filter>src\ThirdSrc\http</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\demo\HlsServerDemo.cpp">
+      <Filter>demo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\demo\HlsServerIO.cpp">
+      <Filter>demo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\demo\main.cpp">
+      <Filter>demo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\demo\net\TcpSocketWin.cpp">
+      <Filter>demo\net</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\src\HlsServer.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\HlsServerSession.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\include\HlsServerCom.h">
+      <Filter>src\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\include\HlsServerInf.h">
+      <Filter>src\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\ThirdSrc\http\Http.h">
+      <Filter>src\ThirdSrc\http</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\ThirdSrc\http\include\HttpClient.h">
+      <Filter>src\ThirdSrc\http\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\ThirdSrc\http\include\HttpCommon.h">
+      <Filter>src\ThirdSrc\http\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\ThirdSrc\http\include\HttpServer.h">
+      <Filter>src\ThirdSrc\http\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\demo\HlsServerDemo.h">
+      <Filter>demo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\demo\HlsServerIO.h">
+      <Filter>demo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\demo\net\include\NetAdapter.h">
+      <Filter>demo\net\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\demo\net\include\TcpSocket.h">
+      <Filter>demo\net\include</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
