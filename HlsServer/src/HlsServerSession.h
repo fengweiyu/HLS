@@ -55,11 +55,13 @@ public:
 class MP4Stream
 {
 public:
-    unsigned int dwSeq;
+	MP4Stream(){strName.clear();};
+	virtual ~MP4Stream(){};
+    string strName;
     unsigned int dwDuration;//ms
     unsigned char abBuf[HLS_MP4_BUF_MAX_LEN];
     unsigned int dwBufCurLen;
-    //unsigned int dwBufMaxLen;
+    //unsigned int dwSeq;
 };
 
 /*****************************************************************************
@@ -91,7 +93,7 @@ private:
 	int m_iM3U8Seq;
 	int m_iSegmentNum;
 	MP4Header * m_pMP4Header;
-    map<string, MP4Stream *>  m_MP4StreamMap;
+    map<int, MP4Stream *>  m_MP4StreamMap;//string 插入排序不准，要用int
     mutex m_MapMtx;
     unsigned int m_dwMaxDuration;//ms
 };

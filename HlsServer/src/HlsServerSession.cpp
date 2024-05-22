@@ -196,14 +196,14 @@ int HlsServerSession::GetM3U8(char *o_strRes,int i_iResMaxLen)
     }
     
     std::lock_guard<std::mutex> lock(m_MapMtx);//std::lock_guard对象会在其作用域结束时自动释放互斥量
-    for (map<string, MP4Stream*>::iterator iter = m_MP4StreamMap.begin(); iter != m_MP4StreamMap.end();iter++)
+    for (map<int, MP4Stream*>::iterator iter = m_MP4StreamMap.begin(); iter != m_MP4StreamMap.end();iter++)
     {
         if(iter->second->dwDuration > dwMaxDuration)
         {
             dwMaxDuration = iter->second->dwDuration;
         }
         fTime = (float)(iter->second->dwDuration / 1000.0f);
-        iListLen += snprintf(strMp4List+iListLen,sizeof(strMp4List)-iListLen,"#EXTINF:%0.3f,\r\n%s_%d.mp4\r\n",fTime,m_pPlaySrc->c_str(),iter->second->dwSeq);
+        iListLen += snprintf(strMp4List+iListLen,sizeof(strMp4List)-iListLen,"#EXTINF:%0.3f,\r\n%s\r\n",fTime,iter->second->strName.c_str());
     }
     iRet = snprintf(o_strRes,i_iResMaxLen,
         "#EXTM3U\r\n"
@@ -311,17 +311,17 @@ int HlsServerSession::SaveContainerData(unsigned char * i_pbBuf, unsigned int i_
     memcpy(pMP4Stream->abBuf,i_pbBuf,i_dwBufLen);
     pMP4Stream->dwBufCurLen=i_dwBufLen;
     pMP4Stream->dwDuration=i_dwDuration;
-    pMP4Stream->dwSeq = m_iSegmentNum;
+    pMP4Stream->strName.assign(strName);
     std::lock_guard<std::mutex> lock(m_MapMtx);//std::lock_guard对象会在其作用域结束时自动释放互斥量
     if(m_MP4StreamMap.size()>=3)
     {
-        map<string, MP4Stream*>::iterator iter = m_MP4StreamMap.begin();
+        map<int, MP4Stream*>::iterator iter = m_MP4StreamMap.begin();
         MP4Stream *pStream = iter->second;
         delete pStream;
         m_MP4StreamMap.erase(iter);
     }
     //map按照键值strSegName从小到大排序
-    m_MP4StreamMap.insert(make_pair(strSegName,pMP4Stream));//要使用MP4Stream *，MP4Stream会把数据拷贝到栈里
+    m_MP4StreamMap.insert(std::make_pair(m_iSegmentNum,pMP4Stream));//要使用MP4Stream *，MP4Stream会把数据拷贝到栈里
 
     return 0;
 }
@@ -347,9 +347,9 @@ int HlsServerSession::GetContainerData(const char * i_strMp4Name,char *o_strRes,
     }
     string strMp4StreamName(i_strMp4Name);
     std::lock_guard<std::mutex> lock(m_MapMtx);//std::lock_guard对象会在其作用域结束时自动释放互斥量
-    for (map<string, MP4Stream*>::iterator iter = m_MP4StreamMap.begin(); iter != m_MP4StreamMap.end();)
+    for (map<int, MP4Stream*>::iterator iter = m_MP4StreamMap.begin(); iter != m_MP4StreamMap.end();)
     {
-        if(strMp4StreamName == iter->first)
+        if(strMp4StreamName == iter->second->strName)
         {
             HLS_LOGW("GetMP4 %s\r\n", strMp4StreamName.c_str());
             if(iter->second->dwBufCurLen>0 && iter->second->dwBufCurLen<=i_iResMaxLen)
@@ -368,10 +368,12 @@ int HlsServerSession::GetContainerData(const char * i_strMp4Name,char *o_strRes,
             iter++;// 继续遍历下一个元素
         }
     }
+    //map<int, MP4Stream*>::iterator iter = m_MP4StreamMap.find(dwSeq);//后续优化为strMp4StreamName取出序列号然后查找
+    //if (iter == m_MP4StreamMap.end()){iRet=-1;};
     if(iRet<=0)
     {//没找到则用最近的数据
-        map<string, MP4Stream *>::iterator iter = m_MP4StreamMap.begin();//map按照键值first从小到大排序
-        HLS_LOGW("GetMP4 no find %s,%s\r\n", strMp4StreamName.c_str(),iter->first.c_str());
+        map<int, MP4Stream *>::iterator iter = m_MP4StreamMap.begin();//map按照键值first从小到大排序
+        HLS_LOGW("GetMP4 no find %s,%d,%s\r\n", strMp4StreamName.c_str(),iter->first,iter->second->strName.c_str());
         if(iter->second->dwBufCurLen>0 && iter->second->dwBufCurLen<=i_iResMaxLen)
         {
             memcpy(o_strRes,iter->second->abBuf,iter->second->dwBufCurLen);
