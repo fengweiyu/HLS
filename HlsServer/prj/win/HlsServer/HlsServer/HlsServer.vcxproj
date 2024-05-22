@@ -72,13 +72,14 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>..\..\</OutDir>
+    <OutDir>..\..\..\..\build\win\x86</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>..\..\..\..\build\win\x64</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -94,8 +95,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\..\..\..\src\ThirdSrc\media\prj\win;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libmedia.lib;WS2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\..\..\build\win\x86\lib\;..\..\..\..\src\ThirdSrc\media\prj\win\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libmedia.lib;libHlsServer.lib;WS2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -118,12 +119,15 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;WIN32;_CRT_SECURE_NO_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>..\..\..\..\src;..\..\..\..\src\include;..\..\..\..\src\ThirdSrc\media\src\include;..\..\..\..\src\ThirdSrc\http;..\..\..\..\src\ThirdSrc\http\include;..\..\..\..\demo;..\..\..\..\demo\net\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>libmedia.lib;libHlsServer.lib;WS2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\..\..\build\win\x64\lib\;..\..\..\..\src\ThirdSrc\media\prj\win\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -147,26 +151,14 @@
     <ClCompile Include="..\..\..\..\demo\HlsServerIO.cpp" />
     <ClCompile Include="..\..\..\..\demo\main.cpp" />
     <ClCompile Include="..\..\..\..\demo\net\TcpSocketWin.cpp" />
-    <ClCompile Include="..\..\..\..\src\HlsServer.cpp" />
-    <ClCompile Include="..\..\..\..\src\HlsServerInf.cpp" />
-    <ClCompile Include="..\..\..\..\src\HlsServerSession.cpp" />
-    <ClCompile Include="..\..\..\..\src\ThirdSrc\http\Http.cpp" />
-    <ClCompile Include="..\..\..\..\src\ThirdSrc\http\HttpClient.cpp" />
-    <ClCompile Include="..\..\..\..\src\ThirdSrc\http\HttpServer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\demo\HlsServerDemo.h" />
     <ClInclude Include="..\..\..\..\demo\HlsServerIO.h" />
     <ClInclude Include="..\..\..\..\demo\net\include\NetAdapter.h" />
     <ClInclude Include="..\..\..\..\demo\net\include\TcpSocket.h" />
-    <ClInclude Include="..\..\..\..\src\HlsServer.h" />
-    <ClInclude Include="..\..\..\..\src\HlsServerSession.h" />
     <ClInclude Include="..\..\..\..\src\include\HlsServerCom.h" />
     <ClInclude Include="..\..\..\..\src\include\HlsServerInf.h" />
-    <ClInclude Include="..\..\..\..\src\ThirdSrc\http\Http.h" />
-    <ClInclude Include="..\..\..\..\src\ThirdSrc\http\include\HttpClient.h" />
-    <ClInclude Include="..\..\..\..\src\ThirdSrc\http\include\HttpCommon.h" />
-    <ClInclude Include="..\..\..\..\src\ThirdSrc\http\include\HttpServer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
