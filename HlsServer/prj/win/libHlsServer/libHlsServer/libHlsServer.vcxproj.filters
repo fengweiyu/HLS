@@ -1,0 +1,67 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="src\include">
+      <UniqueIdentifier>{8027498f-7c5e-4f58-839c-104a9683e533}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ThirdSrc">
+      <UniqueIdentifier>{709cacb2-f32a-4ce5-b2b6-218cc787edc6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ThirdSrc\http">
+      <UniqueIdentifier>{e8cc5056-87dc-4a4b-ba7f-64e299046a32}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ThirdSrc\http\include">
+      <UniqueIdentifier>{3f110874-b655-48ed-a4ad-2d3f8489aaba}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\..\src\HlsServer.cpp">
+      <Filter>src\ThirdSrc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\HlsServerInf.cpp">
+      <Filter>src\ThirdSrc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\HlsServerSession.cpp">
+      <Filter>src\ThirdSrc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\ThirdSrc\http\Http.cpp">
+      <Filter>src\ThirdSrc\http</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\ThirdSrc\http\HttpClient.cpp">
+      <Filter>src\ThirdSrc\http</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\ThirdSrc\http\HttpServer.cpp">
+      <Filter>src\ThirdSrc\http</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\src\HlsServer.h">
+      <Filter>src\ThirdSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\HlsServerSession.h">
+      <Filter>src\ThirdSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\ThirdSrc\http\Http.h">
+      <Filter>src\ThirdSrc\http</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\ThirdSrc\http\include\HttpClient.h">
+      <Filter>src\ThirdSrc\http\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\ThirdSrc\http\include\HttpCommon.h">
+      <Filter>src\ThirdSrc\http\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\ThirdSrc\http\include\HttpServer.h">
+      <Filter>src\ThirdSrc\http\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\include\HlsServerCom.h">
+      <Filter>src\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\include\HlsServerInf.h">
+      <Filter>src\include</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

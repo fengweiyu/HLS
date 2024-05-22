@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.33927.289
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHlsServer", "libHlsServer\libHlsServer.vcxproj", "{1FF7BD75-0FC6-4C79-BFD3-5CF321B0F361}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1FF7BD75-0FC6-4C79-BFD3-5CF321B0F361}.Debug|x64.ActiveCfg = Debug|x64
+		{1FF7BD75-0FC6-4C79-BFD3-5CF321B0F361}.Debug|x64.Build.0 = Debug|x64
+		{1FF7BD75-0FC6-4C79-BFD3-5CF321B0F361}.Debug|x86.ActiveCfg = Debug|Win32
+		{1FF7BD75-0FC6-4C79-BFD3-5CF321B0F361}.Debug|x86.Build.0 = Debug|Win32
+		{1FF7BD75-0FC6-4C79-BFD3-5CF321B0F361}.Release|x64.ActiveCfg = Release|x64
+		{1FF7BD75-0FC6-4C79-BFD3-5CF321B0F361}.Release|x64.Build.0 = Release|x64
+		{1FF7BD75-0FC6-4C79-BFD3-5CF321B0F361}.Release|x86.ActiveCfg = Release|Win32
+		{1FF7BD75-0FC6-4C79-BFD3-5CF321B0F361}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D044D8DF-BC90-4C9B-9C33-D8AF3D19C6C4}
+	EndGlobalSection
+EndGlobal
