@@ -14,16 +14,22 @@ if [ $# == 0 ]; then
     PrintUsage
     exit -1
 else
-    CopyPwd=$PWD/build/linux/$1
-    cd src
-    sh build.sh $1 $CopyPwd
+    cd $2
+    if [ -e "ThirdLib" ]; then
+        echo "ThirdLib exit"
+    else
+        mkdir ThirdLib
+    fi
+    cd -
+    cd media
+    sh build.sh $1 $2/ThirdLib
     if [ $? -ne 0 ]; then
         exit -1
     fi
     cd ..
 
-    cd demo
-    sh build.sh $1 $CopyPwd
+    cd http
+    sh build.sh $1 $2/ThirdLib
     if [ $? -ne 0 ]; then
         exit -1
     fi
