@@ -15,6 +15,7 @@
 #include "HttpServer.h"
 #include "HlsServerSession.h"
 
+
 /*****************************************************************************
 -Class          : HlsServer
 -Description    : HlsServer
@@ -35,6 +36,7 @@ private:
     int SavePlaySrc(string *i_strPlaySrc,HlsServerSession *i_pHlsServerSession);
     HlsServerSession * GetSamePlaySession(string &i_strPlaySrc);
     int CheckPlaySrc();
+    int HlsRegex(const char *i_strPattern,char *i_strBuf,string * o_aMatch,int i_iMatchMaxCnt);
     
     map<string, HlsServerSession *>  m_HlsSessionMap;
     mutex m_MapMtx;
