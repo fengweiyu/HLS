@@ -14,7 +14,9 @@
 #include "HlsServerCom.h"
 #include <regex>
 #include <string>
-//#include <sys/time.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 //#include "cJSON.h"
 
 using std::string;

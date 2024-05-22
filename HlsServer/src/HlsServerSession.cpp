@@ -11,6 +11,9 @@
 ******************************************************************************/
 #include "HlsServerSession.h"
 #include "HlsServerCom.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include <functional>
 
 //#include <sys/time.h>

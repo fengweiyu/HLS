@@ -17,7 +17,7 @@
 #include <Windows.h>
 #define SleepMs(val) Sleep(val)
 #else
-#include <sys/time.h>
+#include <unistd.h>
 #define SleepMs(val) usleep(val*1000)
 #endif
 
