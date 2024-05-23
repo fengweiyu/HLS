@@ -124,7 +124,7 @@ int HlsServerSession::Proc()
         }
         if(iRet>0)
         {
-            if(iContainerHeaderLen>0)
+            if(iContainerHeaderLen>0)//m_pMediaHandle->GetMuxHeader
             {
                 memcpy(m_pMP4Header->abBuf,pbContainerBuf,iContainerHeaderLen);
                 m_pMP4Header->dwBufCurLen=iContainerHeaderLen;

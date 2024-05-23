@@ -254,11 +254,11 @@ int HlsServer::HandleHttpReq(const char * i_strReq,char *o_strRes,int i_iResMaxL
         if (iRet>3) //0ÊÇÕûÐÐ
         {
             string strStreamType(astrRegex[1].c_str());//file
-            string strFileName(astrRegex[2].c_str());
-            string strMp4Name(astrRegex[3].c_str());
-            strMp4Name.append(".mp4");
-            HLS_LOGW("%d,file mp4 m_pFileName %s strMp4Name %s\r\n",iRet,strFileName.c_str(),strMp4Name.c_str());
-            iRet = HandleReqGetMP4(&strFileName,&strMp4Name,o_strRes,i_iResMaxLen);
+            string strSSRC(astrRegex[2].c_str());
+            string strMp4FileName(astrRegex[3].c_str());
+            strMp4FileName.append(".mp4");
+            HLS_LOGW("%d,file mp4 strSSRC %s strMp4FileName %s\r\n",iRet,strSSRC.c_str(),strMp4FileName.c_str());
+            iRet = HandleReqGetMP4(&strSSRC,&strMp4FileName,o_strRes,i_iResMaxLen);
             return iRet;
         } 
     }
