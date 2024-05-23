@@ -63,7 +63,7 @@ HlsServerSession::~HlsServerSession()
     if(NULL!= m_pSessionProc)
     {
         HLS_LOGW("HLSSession start exit\r\n");
-        m_pSessionProc = 0;//m_pWebRTC->StopProc();
+        m_iSessionProcFlag = 0;//m_pWebRTC->StopProc();
         m_pSessionProc->join();//自己join自己肯定不行
         delete m_pSessionProc;
         m_pSessionProc = NULL;
@@ -190,7 +190,7 @@ int HlsServerSession::GetM3U8(char *o_strRes,int i_iResMaxLen)
     }
     
     memset(strMp4List,0,sizeof(strMp4List));
-    //if(0 == m_iM3U8Seq)
+    //if(0 == m_iM3U8Seq)//ios 要求每段前面都要有moov，否则无法播放
     {
         iListLen = snprintf(strMp4List,sizeof(strMp4List),"#EXT-X-MAP:URI=\"%s_init.mp4\",\r\n",m_pPlaySrc->c_str());
     }
