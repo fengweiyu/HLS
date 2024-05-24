@@ -113,7 +113,7 @@ int HlsServerSession::Proc()
         iSleepTimeMS=(int)(tFileFrameInfo.dwTimeStamp-dwFileLastTimeStamp);
         if(iSleepTimeMS > 0)
         {
-            SleepMs(iSleepTimeMS);
+            SleepMs(iSleepTimeMS);//模拟实时流(直播)，点播和当前的处理机制不匹配，需要后续再开发
         }
         iContainerHeaderLen = 0;
         iRet=m_pMediaHandle->FrameToContainer(&tFileFrameInfo,STREAM_TYPE_FMP4_STREAM,pbContainerBuf,HLS_MP4_BUF_MAX_LEN,&iContainerHeaderLen);
