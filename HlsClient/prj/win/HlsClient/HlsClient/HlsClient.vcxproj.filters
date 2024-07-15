@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="demo">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="src\include">
+      <UniqueIdentifier>{5dc6b8fa-a68a-434c-9498-73f1c9af5e62}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="demo\net">
+      <UniqueIdentifier>{0051787a-af2e-45d3-978e-22a034d67ec8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="demo\net\include">
+      <UniqueIdentifier>{b722b3ee-7fbb-4430-ad41-a7a3521d184e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\src\include\HlsClientCom.h">
+      <Filter>src\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\include\HlsClientInf.h">
+      <Filter>src\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\demo\HlsClientDemo.h">
+      <Filter>demo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\demo\HlsClientIO.h">
+      <Filter>demo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\demo\net\include\NetAdapter.h">
+      <Filter>demo\net\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\demo\net\include\TcpSocket.h">
+      <Filter>demo\net\include</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\..\demo\HlsClientDemo.cpp">
+      <Filter>demo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\demo\HlsClientIO.cpp">
+      <Filter>demo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\demo\main.cpp">
+      <Filter>demo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\demo\net\TcpSocketWin.cpp">
+      <Filter>demo\net</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
