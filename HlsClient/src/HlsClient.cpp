@@ -208,46 +208,48 @@ int HlsClient::ParseHttpURL(const char * i_strHttpURL,string *o_strIP,int *o_iPo
         HLS_LOGE("HandleHttpReq NULL \r\n");
         return iRet;
     }
+
+    strHttpURL.assign(i_strHttpURL);
     if(string::npos == strHttpURL.find(".m3u8"))//
     {
         HLS_LOGE("strHttpURL.find m3u8 err \r\n");
         return iRet;
     }
     
-    strHttpURL.assign(i_strHttpURL);
     auto dwHttpPos = strHttpURL.find("http://");
     if(string::npos == dwHttpPos)//
     {
         HLS_LOGE("strHttpURL.find http://err \r\n");
         return iRet;
     }
-    auto dwIpEndPos = strHttpURL.substr(dwHttpPos+strlen("http://")).find(":");
+    auto dwIpEndPos = strHttpURL.find(":",dwHttpPos+strlen("http://"));
     if(string::npos == dwIpEndPos)//
     {
         HLS_LOGE("strHttpURL.find dwIpEndPos err \r\n");
         return iRet;
     }
     o_strIP->assign(strHttpURL.substr(dwHttpPos+strlen("http://"),dwIpEndPos-(dwHttpPos+strlen("http://"))).c_str());
-    auto dwPortEndPos = strHttpURL.substr(dwIpEndPos+strlen(":")).find("/");
+    auto dwPortEndPos = strHttpURL.find("/",dwIpEndPos+strlen(":"));
     if(string::npos == dwPortEndPos)//
     {
         HLS_LOGE("strHttpURL.find dwPortEndPos err \r\n");
         return iRet;
     }
-    o_strIP->assign(strHttpURL.substr(dwIpEndPos+strlen(":"),dwPortEndPos-(dwIpEndPos+strlen(":"))).c_str());
+    *o_iPort=atoi(strHttpURL.substr(dwIpEndPos+strlen(":"),dwPortEndPos-(dwIpEndPos+strlen(":"))).c_str());
     o_strURL->assign(strHttpURL.substr(dwPortEndPos).c_str());
-    auto dwLocatePos = strHttpURL.substr(dwPortEndPos+strlen("/")).find("/");
+    auto dwLocatePos = strHttpURL.find("/",dwPortEndPos+strlen("/"));
     if(string::npos == dwLocatePos)//
     {
         HLS_LOGE("strHttpURL.find dwLocatePos err \r\n");
         return iRet;
     }
-    auto dwLocateEndPos = strHttpURL.substr(dwLocatePos+strlen("/")).find("/");
+    auto dwLocateEndPos = strHttpURL.find("/",dwLocatePos+strlen("/"));
     if(string::npos == dwLocateEndPos)//
     {
         HLS_LOGE("strHttpURL.find dwLocateEndPos err \r\n");
         return iRet;
     }
+    HLS_LOGD("strHttp %s:%d,%s \r\n",o_strIP->c_str(),*o_iPort,o_strURL->c_str());
     m_HlsClientSession.SetMediaLocation(strHttpURL.substr(dwPortEndPos,dwLocateEndPos-dwPortEndPos+strlen("/")).c_str());
     return 0;
 }
@@ -370,7 +372,7 @@ int HlsClient::HandleHttpMedia(char * i_strHttpMedia,int i_iMediaLen,char **o_pp
     }
     if(tHttpResPacket.iContentLength!=tHttpResPacket.iBodyCurLen)
     {
-        HLS_LOGE("tHttpResPacket.iContentLength%d!=tHttpResPacket.iBodyCurLen%d\r\n",tHttpResPacket.iContentLength,tHttpResPacket.iBodyCurLen);
+        HLS_LOGE("tHttpResPacket.iContentLength%d!=tHttpResPacket.iBodyCurLen%d,%s\r\n",tHttpResPacket.iContentLength,tHttpResPacket.iBodyCurLen,i_strHttpMedia);
     }
     *o_ppMediaData=tHttpResPacket.pcBody;
     *o_iDataLen=tHttpResPacket.iBodyCurLen;

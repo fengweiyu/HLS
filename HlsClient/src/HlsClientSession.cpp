@@ -107,19 +107,23 @@ int HlsClientSession::HandleM3U8(const char * i_strM3U8,int *m_iOffset,int * o_i
         return iRet;
     }
     *o_iInfTime=atoi(strM3U8.substr(iInfTimePos+strlen(strExtInf),iInfTimeEndPos-(iInfTimePos+strlen(strExtInf))).c_str());
-    auto iFileNamePos=strM3U8.find(",\r\n",iInfTimeEndPos);
+    auto iFileNamePos=strM3U8.find("\n",iInfTimeEndPos);
     if(string::npos == iFileNamePos)//
     {
         HLS_LOGE("strHttpURL.find iFileNamePos err \r\n");
         return iRet;
     }
-    auto iFileNameEndPos=strM3U8.find("\r\n",iFileNamePos+strlen(",\r\n"));
+    auto iFileNameEndPos=strM3U8.find("\r\n",iFileNamePos+strlen("\n"));
     if(string::npos == iFileNameEndPos)//
     {
-        HLS_LOGE("strHttpURL.find iFileNameEndPos err \r\n");
-        return iRet;
+        iFileNameEndPos=strM3U8.find("\n",iFileNamePos+strlen("\n"));
+        if(string::npos == iFileNameEndPos)//
+        {
+            HLS_LOGE("strHttpURL.find iFileNameEndPos err \r\n");
+            return iRet;
+        }
     }
-    o_strFileName->assign(strM3U8.substr(iFileNamePos+strlen(",\r\n"),iFileNameEndPos-(iFileNamePos+strlen(",\r\n"))).c_str());
+    o_strFileName->assign(strM3U8.substr(iFileNamePos+strlen("\n"),iFileNameEndPos-(iFileNamePos+strlen("\n"))).c_str());
     *m_iOffset=(int)iFileNameEndPos;
     iRet=0;
     HLS_LOGD("o_strFileName %s,o_iInfTime%d,m_iOffset%d \r\n",o_strFileName->c_str(),*o_iInfTime,*m_iOffset);

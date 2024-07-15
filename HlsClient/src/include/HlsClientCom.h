@@ -18,11 +18,13 @@
 #include <direct.h>
 #define SleepMs(val) Sleep(val)
 #define MakeDir(val) _mkdir(val)
+#define DeleteDir(val) _rmdir(val)
 #else
 #include <unistd.h>
 #include <sys/stat.h> 
 #define SleepMs(val) usleep(val*1000)
 #define MakeDir(val) mkdir(val, 0777)
+#define DeleteDir(val) rmdir(val)
 #endif
 
 
