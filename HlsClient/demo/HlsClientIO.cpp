@@ -93,15 +93,19 @@ int HlsClientIO :: Proc(const char * i_strHttpURL)
     int iPort=0;
     string strURL("");
     E_HlsClientState eHlsClientState=HLS_CLIENT_INIT;
-    milliseconds timeMS(300);// 表示300毫秒
-    int iOffset=0,iTryTime=0;
+    //milliseconds timeM3U8MS(10000);// 表示10000毫秒
+    milliseconds timeMediaMS(500);// 表示500毫秒
+    int iOffset=0,iTryTime=10;//第一次10s
     int iFileLen=0;
     char *pcFileBuf=NULL;
     string strFileDir("");
     string strFileName("");
     char strFilePath[128]={0,};
+    string strHttpM3U8("");
+    int iTrySendTime=3;
+    int iSendLen=0;
 
-    
+
     pcRecvBuf = new char[HLS_IO_RECV_MAX_LEN];
     if(NULL == pcRecvBuf)
     {
@@ -135,13 +139,13 @@ int HlsClientIO :: Proc(const char * i_strHttpURL)
         {
             case HLS_CLIENT_INIT:
             {
-                iRet=TcpClient::Init(&strIP,(unsigned short)iPort);
+                /*iRet=TcpClient::Init(&strIP,(unsigned short)iPort);
                 if(iRet < 0)
                 {
                     HLS_LOGE("TcpClient::Init err exit %s,%d\r\n",strIP.c_str(),iPort);
                     break;
                 }
-                m_iClientSocketFd=TcpClient::GetClientSocket();
+                m_iClientSocketFd=TcpClient::GetClientSocket();*/
                 
                 eHlsClientState=HLS_CLIENT_GET_M3U8;
                 break;
@@ -149,41 +153,79 @@ int HlsClientIO :: Proc(const char * i_strHttpURL)
             case HLS_CLIENT_GET_M3U8:
             {
                 memset(pcSendBuf,0,HLS_IO_SEND_MAX_LEN);
-                iRet=m_pHlsClient->GenerateGetM3U8Req(strURL.c_str(),pcSendBuf,HLS_IO_SEND_MAX_LEN);
-                if(iRet < 0)
+                iSendLen=m_pHlsClient->GenerateGetM3U8Req(strURL.c_str(),pcSendBuf,HLS_IO_SEND_MAX_LEN);
+                if(iSendLen < 0)
                 {
                     HLS_LOGE("m_pHlsClient->GenerateGetM3U8Req err exit %s\r\n",i_strHttpURL);
                     break;
                 }
-                iRet=TcpClient::Send(pcSendBuf,iRet);
+
+                iTrySendTime=3;
+                do
+                {
+                    iRet=TcpClient::Init(&strIP,(unsigned short)iPort);
+                    if(iRet < 0)
+                    {
+                        HLS_LOGE("TcpClient::Init err exit %s,%d\r\n",strIP.c_str(),iPort);
+                        break;
+                    }
+                    m_iClientSocketFd=TcpClient::GetClientSocket();
+                    iRet=TcpClient::Send(pcSendBuf,iSendLen);
+                    if(iRet < 0)
+                    {
+                        HLS_LOGE("TcpClient::Send err exit %s,%d\r\n",strIP.c_str(),iPort);
+                        if(iTrySendTime > 0)
+                        {
+                            SleepMs(1000);
+                            iTrySendTime--;
+                            TcpClient::Close();
+                            m_iClientSocketFd=-1;
+                            continue;
+                        }
+                        break;
+                    }
+                    iRecvLen = 0;
+                    memset(pcRecvBuf,0,HLS_IO_RECV_MAX_LEN);
+                    iRet=TcpClient::Recv(pcRecvBuf,&iRecvLen,HLS_IO_RECV_MAX_LEN,m_iClientSocketFd,&timeMediaMS);
+                    if(iRet < 0)
+                    {
+                        HLS_LOGE("TcpClient::Recv err exit %d\r\n",eHlsClientState);
+                        break;
+                    }
+                    if(iRecvLen<=0)
+                    {
+                        HLS_LOGE("TcpClient::Recv iRecvLen err exit %d\r\n",eHlsClientState);
+                        if(iTryTime > 0)
+                        {
+                            SleepMs(iTryTime*1000);
+                            iTryTime=0;
+                            TcpClient::Close();
+                            m_iClientSocketFd=-1;
+                            continue;
+                        }
+                        iRet=-1;
+                        break;
+                    }
+                    TcpClient::Close();
+                    m_iClientSocketFd=-1;
+                    break;
+                }while(1);
                 if(iRet < 0)
                 {
-                    HLS_LOGE("TcpClient::Send err exit %s,%d\r\n",strIP.c_str(),iPort);
+                    HLS_LOGE("HLS_CLIENT_GET_M3U8 eHlsClientState err exit %s,%d\r\n",strIP.c_str(),eHlsClientState);
                     break;
                 }
-                iRecvLen = 0;
-                memset(pcRecvBuf,0,HLS_IO_RECV_MAX_LEN);
-                iRet=TcpClient::Recv(pcRecvBuf,&iRecvLen,HLS_IO_RECV_MAX_LEN,m_iClientSocketFd,&timeMS);
-                if(iRet < 0)
-                {
-                    HLS_LOGE("TcpClient::Recv err exit %d\r\n",iRecvLen);
-                    break;
-                }
-                if(iRecvLen<=0)
-                {
-                    HLS_LOGE("TcpClient::Recv iRecvLen err exit %d\r\n",iRecvLen);
-                    iRet=-1;
-                    break;
-                }
+
                 iOffset=0;
                 iTryTime=0;
+                strHttpM3U8.assign(pcRecvBuf);
                 eHlsClientState=HLS_CLIENT_HANDLE_M3U8;
                 break;
             }
             case HLS_CLIENT_HANDLE_M3U8:
             {
-                iRet=m_pHlsClient->HandleHttpM3U8(pcRecvBuf,&iOffset,&iTryTime,&strFileName,pcSendBuf,HLS_IO_SEND_MAX_LEN);
-                if(iRet <= 0)
+                iSendLen=m_pHlsClient->HandleHttpM3U8((char *)strHttpM3U8.c_str(),&iOffset,&iTryTime,&strFileName,pcSendBuf,HLS_IO_SEND_MAX_LEN);
+                if(iSendLen <= 0)//m3u8优化处理只最新的，没处理过的文件
                 {
                     HLS_LOGE("HandleHttpM3U8 err %s,%d\r\n",strIP.c_str(),iPort);
                     iRet=0;
@@ -191,20 +233,37 @@ int HlsClientIO :: Proc(const char * i_strHttpURL)
                     break;
                 }
 
+                
+                iTrySendTime=3;
                 do
                 {
-                    iRet=TcpClient::Send(pcSendBuf,iRet);
+                    iRet=TcpClient::Init(&strIP,(unsigned short)iPort);
+                    if(iRet < 0)
+                    {
+                        HLS_LOGE("TcpClient::Init err exit %s,%d\r\n",strIP.c_str(),iPort);
+                        break;
+                    }
+                    m_iClientSocketFd=TcpClient::GetClientSocket();
+                    iRet=TcpClient::Send(pcSendBuf,iSendLen);
                     if(iRet < 0)
                     {
                         HLS_LOGE("TcpClient::Send err exit %d\r\n",eHlsClientState);
+                        if(iTrySendTime > 0)
+                        {
+                            SleepMs(1000);
+                            iTrySendTime--;
+                            TcpClient::Close();
+                            m_iClientSocketFd=-1;
+                            continue;
+                        }
                         break;
                     }
                     iRecvLen = 0;
                     memset(pcRecvBuf,0,HLS_IO_RECV_MAX_LEN);
-                    iRet=TcpClient::Recv(pcRecvBuf,&iRecvLen,HLS_IO_RECV_MAX_LEN,m_iClientSocketFd,&timeMS);
+                    iRet=TcpClient::Recv(pcRecvBuf,&iRecvLen,HLS_IO_RECV_MAX_LEN,m_iClientSocketFd,&timeMediaMS);
                     if(iRet < 0)
                     {
-                        HLS_LOGE("TcpClient::Recv err exit %d\r\n",iRecvLen);
+                        HLS_LOGE("TcpClient::Recv err exit %d\r\n",eHlsClientState);
                         break;
                     }
                     if(iRecvLen<=0)
@@ -212,12 +271,17 @@ int HlsClientIO :: Proc(const char * i_strHttpURL)
                         HLS_LOGE("TcpClient::Recv iRecvLen err %d\r\n",iTryTime);
                         if(iTryTime > 0)
                         {
-                            SleepMs(iTryTime);
+                            SleepMs(iTryTime*1000);//要等持续时间，否则拿到的可能还是旧的
                             iTryTime=0;
+                            TcpClient::Close();
+                            m_iClientSocketFd=-1;
                             continue;
                         }
                         break;
                     }
+                    TcpClient::Close();
+                    m_iClientSocketFd=-1;
+                    
                     iRet=m_pHlsClient->HandleHttpMedia(pcRecvBuf,iRecvLen,&pcFileBuf,&iFileLen);//m3u8嵌套m3u8的情况后续再处理
                     if(iRet < 0)
                     {
@@ -226,9 +290,10 @@ int HlsClientIO :: Proc(const char * i_strHttpURL)
                     }
                     snprintf(strFilePath,sizeof(strFilePath),"%s/%s",strFileDir.c_str(),strFileName.c_str());
                     this->SaveFile((const char *)strFilePath,pcFileBuf,iFileLen);
-                }while(iTryTime>0);
+                    break;
+                }while(1);
 
-                break;
+                break;//要等持续时间，否则m3U8可能是旧的
             }
         }        
         if(iRet < 0)
@@ -307,7 +372,7 @@ int HlsClientIO :: SaveFile(const char * strFileName,char *i_pData,int i_iLen)
 int HlsClientIO :: CreateSaveDir(const char * i_strLocation,string *o_strSaveDir)
 {
     int iRet = -1;
-    char strLocation[128];
+    char strLocation[512];
 
     if(NULL == i_strLocation || NULL == o_strSaveDir)
     {
@@ -316,6 +381,7 @@ int HlsClientIO :: CreateSaveDir(const char * i_strLocation,string *o_strSaveDir
     }
     memset(strLocation,0,sizeof(strLocation));
     memcpy(strLocation,i_strLocation,strlen(i_strLocation));
+    //iRet = DeleteDir((const char *)strLocation);//无法删除非空目录
     char *sep = strchr(strLocation, '/');
     if (sep != NULL) 
     {  
