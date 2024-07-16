@@ -35,7 +35,7 @@ class HlsClientDemo
 public:
 	HlsClientDemo();
 	virtual ~HlsClientDemo();
-    int Proc(const char * i_strHttpURL);
+    int Proc(const char * i_strHttpURL,const char *i_strFlag=NULL);
     
 private:
     HlsClientIO m_HlsClientIO;

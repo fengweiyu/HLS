@@ -82,7 +82,7 @@ HlsClientIO :: ~HlsClientIO()
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int HlsClientIO :: Proc(const char * i_strHttpURL)
+int HlsClientIO :: Proc(const char * i_strHttpURL,const char *i_strFlag)
 {
     int iRet=-1;
     char *pcRecvBuf=NULL;
@@ -93,8 +93,8 @@ int HlsClientIO :: Proc(const char * i_strHttpURL)
     int iPort=0;
     string strURL("");
     E_HlsClientState eHlsClientState=HLS_CLIENT_INIT;
-    //milliseconds timeM3U8MS(10000);// 表示10000毫秒
-    milliseconds timeMediaMS(500);// 表示500毫秒
+    milliseconds timeM3U8MS(10000);// 表示10000毫秒
+    milliseconds timeMediaMS(500);// 表示500毫秒，每次都超时500ms，可以减小这个值从而缩短处理(等待)时间
     int iOffset=0,iTryTime=10;//第一次10s
     int iFileLen=0;
     char *pcFileBuf=NULL;
@@ -103,9 +103,12 @@ int HlsClientIO :: Proc(const char * i_strHttpURL)
     char strFilePath[128]={0,};
     string strHttpM3U8("");
     int iTrySendTime=3;
+    int iTryRecvTime=15;
     int iSendLen=0;
+    int iMaxDurationTime=0;
 
 
+    
     pcRecvBuf = new char[HLS_IO_RECV_MAX_LEN];
     if(NULL == pcRecvBuf)
     {
@@ -121,20 +124,20 @@ int HlsClientIO :: Proc(const char * i_strHttpURL)
     }
     m_iHlsClientIOFlag = 1;
     HLS_LOGW("HlsClientIO start Proc\r\n");
+    iRet=m_pHlsClient->ParseHttpURL(i_strHttpURL,&strIP,&iPort,&strURL);
+    if(iRet < 0)
+    {
+        HLS_LOGE("m_pHlsClient->ParseHttpURL err exit %s\r\n",i_strHttpURL);
+        return -1;
+    }
+    iRet=CreateSaveDir(strURL.c_str()+1,&strFileDir);
+    if(iRet < 0)
+    {
+        HLS_LOGE("m_pHlsClient->CreateSaveDir err exit %s\r\n",i_strHttpURL);
+        return -1;
+    }
     while(m_iHlsClientIOFlag)
     {
-        iRet=m_pHlsClient->ParseHttpURL(i_strHttpURL,&strIP,&iPort,&strURL);
-        if(iRet < 0)
-        {
-            HLS_LOGE("m_pHlsClient->ParseHttpURL err exit %s\r\n",i_strHttpURL);
-            break;
-        }
-        iRet=CreateSaveDir(strURL.c_str()+1,&strFileDir);
-        if(iRet < 0)
-        {
-            HLS_LOGE("m_pHlsClient->CreateSaveDir err exit %s\r\n",i_strHttpURL);
-            break;
-        }
         switch(eHlsClientState)
         {
             case HLS_CLIENT_INIT:
@@ -184,17 +187,32 @@ int HlsClientIO :: Proc(const char * i_strHttpURL)
                         }
                         break;
                     }
-                    iRecvLen = 0;
-                    memset(pcRecvBuf,0,HLS_IO_RECV_MAX_LEN);
-                    iRet=TcpClient::Recv(pcRecvBuf,&iRecvLen,HLS_IO_RECV_MAX_LEN,m_iClientSocketFd,&timeMediaMS);
-                    if(iRet < 0)
+                    do
                     {
-                        HLS_LOGE("TcpClient::Recv err exit %d\r\n",eHlsClientState);
+                        iRecvLen = 0;
+                        memset(pcRecvBuf,0,HLS_IO_RECV_MAX_LEN);
+                        iRet=TcpClient::Recv(pcRecvBuf,&iRecvLen,HLS_IO_RECV_MAX_LEN,m_iClientSocketFd,&timeMediaMS);//不知道协议大小，内部必然超时才退出
+                        if(iRet < 0)
+                        {
+                            HLS_LOGE("TcpClient::Recv err exit %d\r\n",eHlsClientState);
+                            break;
+                        }
+                        if(iRecvLen<=0)
+                        {//超时
+                            HLS_LOGE("TcpClient::Recv iRecvLen err exit %d\r\n",eHlsClientState);
+                            if(iTryRecvTime > 0)
+                            {//第一次登陆比较久
+                                iTryRecvTime--;
+                                continue;
+                            }
+                            iRet=-1;//退出程序
+                            break;
+                        }
                         break;
-                    }
-                    if(iRecvLen<=0)
-                    {
-                        HLS_LOGE("TcpClient::Recv iRecvLen err exit %d\r\n",eHlsClientState);
+                    }while(1);
+                    if(iRet < 0)
+                    {//Recv
+                        HLS_LOGE("TcpClient::Recv Recv err exit %d\r\n",eHlsClientState);
                         if(iTryTime > 0)
                         {
                             SleepMs(iTryTime*1000);
@@ -203,10 +221,9 @@ int HlsClientIO :: Proc(const char * i_strHttpURL)
                             m_iClientSocketFd=-1;
                             continue;
                         }
-                        iRet=-1;
                         break;
                     }
-                    TcpClient::Close();
+                    TcpClient::Close();//短连接
                     m_iClientSocketFd=-1;
                     break;
                 }while(1);
@@ -218,22 +235,30 @@ int HlsClientIO :: Proc(const char * i_strHttpURL)
 
                 iOffset=0;
                 iTryTime=0;
+                iMaxDurationTime=0;
                 strHttpM3U8.assign(pcRecvBuf);
+                iRet = m_pHlsClient->ParseHttpM3U8((char *)strHttpM3U8.c_str(),&iMaxDurationTime);
                 eHlsClientState=HLS_CLIENT_HANDLE_M3U8;
                 break;
             }
             case HLS_CLIENT_HANDLE_M3U8:
             {
-                iSendLen=m_pHlsClient->HandleHttpM3U8((char *)strHttpM3U8.c_str(),&iOffset,&iTryTime,&strFileName,pcSendBuf,HLS_IO_SEND_MAX_LEN);
+                //iSendLen=m_pHlsClient->HandleHttpM3U8((char *)strHttpM3U8.c_str(),&iOffset,&iTryTime,&strFileName,pcSendBuf,HLS_IO_SEND_MAX_LEN);
+                iSendLen=m_pHlsClient->GetFileInfo(&iTryTime,&strFileName,pcSendBuf,HLS_IO_SEND_MAX_LEN);
                 if(iSendLen <= 0)//m3u8优化处理只最新的，没处理过的文件
                 {
-                    HLS_LOGE("HandleHttpM3U8 err %s,%d\r\n",strIP.c_str(),iPort);
+                    HLS_LOGE("HandleHttpM3U8 NULL %s,%d\r\n",strIP.c_str(),iPort);
                     iRet=0;
-                    eHlsClientState=HLS_CLIENT_GET_M3U8;
+                    SleepMs(iMaxDurationTime*1000);//全部拿完后，等待一个片段的时间，再拿最新的片段
+                    eHlsClientState=HLS_CLIENT_GET_M3U8;//要等持续时间，否则拿到的可能还是旧的
                     break;
                 }
 
-                
+                if(iTryTime > 0)
+                {
+                    //SleepMs(iTryTime*1000);//要等持续时间，否则拿到的可能还是旧的
+                    iTryTime=0;
+                }
                 iTrySendTime=3;
                 do
                 {
@@ -269,14 +294,14 @@ int HlsClientIO :: Proc(const char * i_strHttpURL)
                     if(iRecvLen<=0)
                     {
                         HLS_LOGE("TcpClient::Recv iRecvLen err %d\r\n",iTryTime);
-                        if(iTryTime > 0)
+                        /*if(iTryTime > 0)
                         {
                             SleepMs(iTryTime*1000);//要等持续时间，否则拿到的可能还是旧的
                             iTryTime=0;
                             TcpClient::Close();
                             m_iClientSocketFd=-1;
                             continue;
-                        }
+                        }*/
                         break;
                     }
                     TcpClient::Close();
@@ -288,7 +313,15 @@ int HlsClientIO :: Proc(const char * i_strHttpURL)
                         HLS_LOGE("HandleHttpM3U8 err %s,%d\r\n",strIP.c_str(),iPort);
                         break;
                     }
-                    snprintf(strFilePath,sizeof(strFilePath),"%s/%s",strFileDir.c_str(),strFileName.c_str());
+                    auto iFormatPos = strFileName.find(".");
+                    if(NULL != i_strFlag && string::npos != iFormatPos)
+                    {
+                        snprintf(strFilePath,sizeof(strFilePath),"%s/%s%s",strFileDir.c_str(),i_strFlag,strFileName.substr(iFormatPos).c_str());
+                    }
+                    else
+                    {
+                        snprintf(strFilePath,sizeof(strFilePath),"%s/%s",strFileDir.c_str(),strFileName.c_str());
+                    }
                     this->SaveFile((const char *)strFilePath,pcFileBuf,iFileLen);
                     break;
                 }while(1);
@@ -340,7 +373,7 @@ int HlsClientIO :: SaveFile(const char * strFileName,char *i_pData,int i_iLen)
         HLS_LOGE("SaveFile NULL \r\n");
         return iRet;
     }
-    pMediaFile = fopen(strFileName,"wb");//
+    pMediaFile = fopen(strFileName,"ab");//wb
     if(NULL == pMediaFile)
     {
         HLS_LOGE("fopen %s err\r\n",strFileName);

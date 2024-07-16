@@ -31,16 +31,20 @@ int main(int argc, char* argv[])
 {
     int iRet = -1;
     
-    
-    if(argc !=2)
+    if(argc < 2)
     {
         PrintUsage(argv[0]);
         return iRet;
     }
-
     HlsClientDemo *pHlsClientDemo = new HlsClientDemo();
-    iRet=pHlsClientDemo->Proc(argv[1]);//×èÈû
-    
+    if(argc == 2)
+    {
+        iRet=pHlsClientDemo->Proc(argv[1]);//×èÈû
+        delete pHlsClientDemo;
+        return iRet;
+    }
+    iRet=pHlsClientDemo->Proc(argv[2],argv[1]);//×èÈû
+    delete pHlsClientDemo;
     return iRet;
 }
 /*****************************************************************************

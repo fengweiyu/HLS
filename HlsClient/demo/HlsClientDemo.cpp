@@ -56,9 +56,9 @@ HlsClientDemo :: ~HlsClientDemo()
 * -----------------------------------------------
 * 2023/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int HlsClientDemo :: Proc(const char * i_strHttpURL)
+int HlsClientDemo :: Proc(const char * i_strHttpURL,const char *i_strFlag)
 {
-    return m_HlsClientIO.Proc(i_strHttpURL);
+    return m_HlsClientIO.Proc(i_strHttpURL,i_strFlag);
 }
 
 

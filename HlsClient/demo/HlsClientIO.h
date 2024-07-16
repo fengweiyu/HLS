@@ -33,7 +33,7 @@ class HlsClientIO : public TcpClient
 public:
 	HlsClientIO();
 	virtual ~HlsClientIO();
-    int Proc(const char * i_strHttpURL);
+    int Proc(const char * i_strHttpURL,const char *i_strFlag=NULL);
     int GetProcFlag();
 private:
     int SaveFile(const char * strFileName,char *i_pData,int i_iLen);
