@@ -345,6 +345,97 @@ int HlsClient::HandleHttpM3U8(char * i_strHttpM3U8,int *m_iOffset,int * o_iTryTi
 }
 /*****************************************************************************
 -Fuction        : HandleHttpM3U8
+-Description    : //return ResLen,<0 err
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int HlsClient::ParseHttpM3U8(char * i_strHttpM3U8,int * o_iMaxDurationTime)
+{
+    int iRet = -1;
+    char strM3U8[512];
+    int iM3U8Len = 0;
+    T_HttpResPacket tHttpResPacket;
+    string strFileName("");
+    string strFileURL("");
+    
+    if(NULL == i_strHttpM3U8)
+    {
+        HLS_LOGE("ParseHttpM3U8 NULL \r\n");
+        return iRet;
+    }
+    memset(&strM3U8,0,sizeof(strM3U8));
+    memset(&tHttpResPacket,0,sizeof(T_HttpResPacket));
+    tHttpResPacket.pcBody=strM3U8;
+    tHttpResPacket.iBodyMaxLen=(int)sizeof(strM3U8);
+    iRet=HttpClient::ParseResponse(i_strHttpM3U8,strlen(i_strHttpM3U8),&tHttpResPacket);
+    if(iRet < 0)
+    {
+        HLS_LOGE("HttpClient::ParseResponse err \r\n");
+        return iRet;
+    }
+    if(NULL == strstr(tHttpResPacket.strContentType,"apple.mpegurl"))
+    {
+        HLS_LOGE("HttpClient::tHttpResPacket.strContentType err %s\r\n",tHttpResPacket.strContentType);
+    }
+    iRet=m_HlsClientSession.ParseM3U8((const char *)tHttpResPacket.pcBody);
+    if(iRet < 0)
+    {
+        HLS_LOGE("HttpClient::HandleM3U8 err \r\n");
+        return iRet;
+    }
+    iRet=m_HlsClientSession.GetMaxDurationTime((const char *)tHttpResPacket.pcBody,o_iMaxDurationTime);
+    if(iRet < 0)
+    {
+        HLS_LOGE("HttpClient::GetMaxDurationTime err \r\n");
+        return iRet;
+    }
+    return iRet;
+}
+/*****************************************************************************
+-Fuction        : HandleHttpM3U8
+-Description    : //return ResLen,<0 err
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int HlsClient::GetFileInfo(int * o_iDurationTime,string *o_strFileName,char *o_strReq,int i_iReqMaxLen)
+{
+    int iRet = -1;
+    string strFileName("");
+    string strFileURL("");
+    
+    if(NULL == o_iDurationTime|| NULL == o_strFileName|| NULL == o_strReq || i_iReqMaxLen <= 0)
+    {
+        HLS_LOGE("HandleHttpM3U8 NULL \r\n");
+        return iRet;
+    }
+    iRet=m_HlsClientSession.GetFileInfo(o_iDurationTime,&strFileName,&strFileURL);
+    if(iRet < 0)
+    {
+        HLS_LOGE("HttpClient::GetFileURL err \r\n");
+        return iRet;
+    }
+
+    iRet=HttpClient::CreateRequest("GET",strFileURL.c_str());
+    iRet=HttpClient::SetReqHeaderValue("User-Agent","ywfPalyer");
+    iRet=HttpClient::SetReqHeaderValue("Accept","*/*");
+    iRet=HttpClient::SetReqHeaderValue("Range","bytes=0-");
+    iRet=HttpClient::SetReqHeaderValue("Connection","keep-alive");
+
+    iRet=HttpClient::FormatReqToStream(NULL,0,o_strReq,i_iReqMaxLen);
+    o_strFileName->assign(strFileName.c_str());
+    return iRet;
+}
+
+/*****************************************************************************
+-Fuction        : HandleHttpM3U8
 -Description    : Content-Type: video/mp2t
 -Input          : 
 -Output         : 
@@ -353,18 +444,18 @@ int HlsClient::HandleHttpM3U8(char * i_strHttpM3U8,int *m_iOffset,int * o_iTryTi
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int HlsClient::HandleHttpMedia(char * i_strHttpMedia,int i_iMediaLen,char **o_ppMediaData,int *o_iDataLen)
+int HlsClient::HandleHttpMedia(char * i_pcHttpMedia,int i_iMediaLen,char **o_ppMediaData,int *o_iDataLen)
 {
     int iRet = -1;
     T_HttpResPacket tHttpResPacket;
     
-    if(NULL == i_strHttpMedia || NULL == o_ppMediaData|| NULL == o_iDataLen|| i_iMediaLen <= 0)
+    if(NULL == i_pcHttpMedia || NULL == o_ppMediaData|| NULL == o_iDataLen|| i_iMediaLen <= 0)
     {
         HLS_LOGE("HandleHttpMedia NULL \r\n");
         return iRet;
     }
     memset(&tHttpResPacket,0,sizeof(T_HttpResPacket));
-    iRet=HttpClient::ParseResponse(i_strHttpMedia,i_iMediaLen,&tHttpResPacket);
+    iRet=HttpClient::ParseResponse(i_pcHttpMedia,i_iMediaLen,&tHttpResPacket);
     if(iRet < 0)
     {
         HLS_LOGE("HandleHttpMedia::ParseResponse err \r\n");
@@ -372,7 +463,7 @@ int HlsClient::HandleHttpMedia(char * i_strHttpMedia,int i_iMediaLen,char **o_pp
     }
     if(tHttpResPacket.iContentLength!=tHttpResPacket.iBodyCurLen)
     {
-        HLS_LOGE("tHttpResPacket.iContentLength%d!=tHttpResPacket.iBodyCurLen%d,%s\r\n",tHttpResPacket.iContentLength,tHttpResPacket.iBodyCurLen,i_strHttpMedia);
+        HLS_LOGE("tHttpResPacket.iContentLength%d!=tHttpResPacket.iBodyCurLen%d,i_iMediaLen%d\r\n",tHttpResPacket.iContentLength,tHttpResPacket.iBodyCurLen,i_iMediaLen);
     }
     *o_ppMediaData=tHttpResPacket.pcBody;
     *o_iDataLen=tHttpResPacket.iBodyCurLen;

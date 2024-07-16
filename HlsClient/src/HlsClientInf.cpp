@@ -105,6 +105,40 @@ int HlsClientInf::HandleHttpM3U8(char * i_strHttpM3U8,int *m_iOffset,int * o_iTr
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
+int HlsClientInf::ParseHttpM3U8(char * i_strHttpM3U8,int * o_iMaxDurationTime)
+{
+    HlsClient *pHlsClient = (HlsClient *)m_pHandle;
+    return pHlsClient->ParseHttpM3U8(i_strHttpM3U8,o_iMaxDurationTime);
+}
+
+
+/*****************************************************************************
+-Fuction        : Proc
+-Description    : Proc
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int HlsClientInf::GetFileInfo(int * o_iDurationTime,string *o_strFileName,char *o_strReq,int i_iReqMaxLen)
+{
+    HlsClient *pHlsClient = (HlsClient *)m_pHandle;
+    return pHlsClient->GetFileInfo(o_iDurationTime,o_strFileName,o_strReq,i_iReqMaxLen);
+}
+
+
+/*****************************************************************************
+-Fuction        : Proc
+-Description    : Proc
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
 int HlsClientInf::HandleHttpMedia(char * i_strHttpMedia,int i_iMediaLen,char **o_ppMediaData,int *o_iDataLen)
 {
     HlsClient *pHlsClient = (HlsClient *)m_pHandle;
