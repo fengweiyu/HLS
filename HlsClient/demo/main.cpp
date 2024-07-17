@@ -43,7 +43,7 @@ int main(int argc, char* argv[])
         delete pHlsClientDemo;
         return iRet;
     }
-    iRet=pHlsClientDemo->Proc(argv[2],argv[1]);//×èÈû
+    iRet=pHlsClientDemo->Proc(argv[1],argv[2]);//×èÈû
     delete pHlsClientDemo;
     return iRet;
 }
@@ -59,7 +59,9 @@ int main(int argc, char* argv[])
 ******************************************************************************/
 static void PrintUsage(char *i_strProcName)
 {
-    printf("Usage: %s url \r\n",i_strProcName);
+    printf("Usage: %s inputURL(this will Generate files in ./xx/xx/*.*)\r\n",i_strProcName);
     printf("eg: %s http://localhost:9212/live/sn/test.m3u8\r\n",i_strProcName);
+    printf("or: %s inputURL outputFILE (this will merge files to one file)\r\n",i_strProcName);
+    printf("eg: %s http://localhost:9212/live/sn/test.m3u8 test\r\n",i_strProcName);
 }
 
