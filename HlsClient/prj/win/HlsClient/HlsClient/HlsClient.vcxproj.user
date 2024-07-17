@@ -7,6 +7,6 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerWorkingDirectory>$(ProjectDir)..\..\..\..\build\win\x64</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>merge http://119.3.10.214:9010/live/86bc7f7820360290/Mnx8Y2U3ZTg2YmYxOGZmZTE3YmQ0NDRkZWUxMTcyN2FjZTd8fDg2YmM3Zjc4MjAzNjAyOTB8fDgyNGViMzU2MWQxMDY0ZDBmYWFlNzJkZD1A1ZmJjODU1YjdhZjIwZjUwNzNiOWU0ZDcxZTRmZjFiZDMzOGZkYjV8fGhsc3x8MTcyMTA0MTk3MDcyMXx8MTcyMjM3Mzk0NDUwMHx8R1dN.b37f03e8981b4660e38552c1efd3fc17.m3u8</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>http://119.3.10.214:9010/live/86bc7f7820360290/Mnx8Y2U3ZTg2YmYxOGZmZTE3YmQ0NDRkZWUxMTcyN2FjZTd8fDg2YmM3Zjc4MjAzNjAyOTB8fDgyNGViMzU2MWQxMDY0ZDBmYWFlNzJkZD1A1ZmJjODU1YjdhZjIwZjUwNzNiOWU0ZDcxZTRmZjFiZDMzOGZkYjV8fGhsc3x8MTcyMTA0MTk3MDcyMXx8MTcyMjM3Mzk0NDUwMHx8R1dN.b37f03e8981b4660e38552c1efd3fc17.m3u8 merge</LocalDebuggerCommandArguments>
   </PropertyGroup>
 </Project>
