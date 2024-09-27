@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
 {
     int iRet = -1;
     
-    int dwServerPort=9212;
+    int dwServerPort=9210;
     
     if(argc !=2)
     {
@@ -48,7 +48,8 @@ int main(int argc, char* argv[])
 }
 /*****************************************************************************
 -Fuction        : PrintUsage
--Description    : PrintUsage
+-Description    : http://localhost:9210/file/H264AAC.flv/testFMP4.m3u8
+https://localhost:9211/file/H264AAC.flv/testFMP4.m3u8
 -Input          : 
 -Output         : 
 -Return         : 
@@ -60,5 +61,7 @@ static void PrintUsage(char *i_strProcName)
 {
     printf("Usage: %s ServerPort \r\n",i_strProcName);
     printf("run default args: %s 9212 \r\n",i_strProcName);
+    printf("hls url eg: https://yuweifeng.top:9211/file/H264AAC.flv/testFMP4.m3u8\r\n");
+    printf("hls url eg: https://yuweifeng.top:9211/file/H265AAC.flv/testFMP4.m3u8\r\n");
 }
 
