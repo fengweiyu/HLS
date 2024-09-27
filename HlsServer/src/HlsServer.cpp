@@ -239,17 +239,18 @@ int HlsServer::HandleHttpReq(const char * i_strReq,char *o_strRes,int i_iResMaxL
     if(0 == strcmp(tHttpReqPacket.strMethod,HTTP_METHOD_GET))
     {
         string astrRegex[HLS_MAX_MATCH_NUM];
-        const char * strM3U8Pattern = "/([A-Za-z]+)/([A-Za-z0-9._]+)/([A-Za-z0-9_]+).m3u8";//http://localhost:9212/file/H264AAC.flv/test.m3u8
+        const char * strM3U8Pattern = "/([A-Za-z]+)/([A-Za-z0-9._]+)/([A-Za-z0-9_]+).m3u8";//http://localhost:9210/file/H264AAC.flv/testFMP4.m3u8
         iRet=this->HlsRegex(strM3U8Pattern,tHttpReqPacket.strURL,astrRegex,HLS_MAX_MATCH_NUM);
         if (iRet>2) //0是整行
         {
             string strStreamType(astrRegex[1].c_str());//file
             string strFileName(astrRegex[2].c_str());
-            HLS_LOGW("%d,file m_pFileName %s\r\n",iRet,strFileName.c_str());
+            string strStreamPacket(astrRegex[3].c_str());
+            HLS_LOGW("%d,file m_pFileName %s,strStreamPacket %s\r\n",iRet,strFileName.c_str(),strStreamPacket.c_str());
             iRet = HandleReqGetM3U8(&strFileName,o_strRes,i_iResMaxLen);
             return iRet;
         } 
-        const char * strMP4Pattern = "/([A-Za-z]+)/([A-Za-z0-9._]+)/([A-Za-z0-9_.]+).mp4";//http://localhost:9212/file/H264AAC.flv/H264AAC.flv_init.mp4
+        const char * strMP4Pattern = "/([A-Za-z]+)/([A-Za-z0-9._]+)/([A-Za-z0-9_.]+).mp4";//http://localhost:9210/file/H264AAC.flv/H264AAC.flv_init.mp4
         iRet=this->HlsRegex(strMP4Pattern,tHttpReqPacket.strURL,astrRegex,HLS_MAX_MATCH_NUM);
         if (iRet>3) //0是整行
         {
