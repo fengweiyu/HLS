@@ -1,0 +1,82 @@
+<html>
+  <head>
+    <title>Hls.js demo</title>
+  </head>
+
+  <body>
+    <script src="./hls.js"></script>
+
+    <center>
+      <h1><a href="https://github.com/video-dev/hls.js">Hls.js demo</a></h1>
+      <textarea name="" id="UrlInput" cols="80" rows="2"></textarea>
+      <div class="box">
+        <button id="startButton">start</button>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button id="stopButton">stop</button>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button id="h264Button">h264</button>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button id="h265Button">h265</button>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button id="defaultButton">default</button>
+      </div>
+      <video height="600" id="video" controls></video>
+    </center>
+
+    <script>
+      const startButton = document.getElementById('startButton');
+      const stopButton = document.getElementById('stopButton');
+      const h264Button = document.getElementById('h264Button');
+      const h265Button = document.getElementById('h265Button');
+      const defaultButton = document.getElementById('defaultButton');
+      const UrlInput = document.getElementById('UrlInput')
+      UrlInput.value = 'https://yuweifeng.top:9211/file/H264AAC.flv/testFMP4.m3u8'; 
+      startButton.addEventListener('click', setEnable);
+      stopButton.addEventListener('click', setDisable);
+      h264Button.addEventListener('click', setH264);
+      h265Button.addEventListener('click', setH265);
+      defaultButton.addEventListener('click', setDefault);
+      var video = document.getElementById('video');
+      var hls = null;
+      function setH264() 
+      {
+        UrlInput.value = 'https://yuweifeng.top:9211/file/H264AAC.flv/testFMP4.m3u8'; 
+      }
+      function setH265() 
+      {
+        UrlInput.value = 'https://yuweifeng.top:9211/file/H265AAC.flv/testFMP4.m3u8'; 
+      }
+      function setDefault() 
+      {
+        UrlInput.value = 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8'; 
+      }
+      function setEnable() 
+      {
+        console.log('start Hls');
+        if (Hls.isSupported()) {
+            hls = new Hls({debug: true,});
+            hls.loadSource(UrlInput.value);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MEDIA_ATTACHED, function () {
+              video.muted = true;
+              video.play();
+            });
+        }
+        // hls.js is not supported on platforms that do not have Media Source Extensions (MSE) enabled.
+        // When the browser has built-in HLS support (check using `canPlayType`), we can provide an HLS manifest (i.e. .m3u8 URL) directly to the video element through the `src` property.
+        // This is using the built-in support of the plain video element, without using hls.js.
+        else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = UrlInput.value;//https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8
+            video.addEventListener('canplay', function () {
+              video.play();
+            });
+        }
+      }
+      function setDisable() 
+      {
+         if (hls) 
+         {
+            video.pause();
+            hls.destroy();
+            hls = null;
+         }
+      }
+    </script>
+  </body>
+</html>
