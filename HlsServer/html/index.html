@@ -39,7 +39,7 @@
         UrlInput.value = 'https://yuweifeng.top:9211/file/H264AAC.flv/testFMP4.m3u8'; 
       }
       function setH265() 
-      {
+      {//对于h265,hls.js不支持ts打包方式只支持fmp4，对于音频，hls.js不支持g711a只支持aac
         UrlInput.value = 'https://yuweifeng.top:9211/file/H265AAC.flv/testFMP4.m3u8'; 
       }
       function setDefault() 
