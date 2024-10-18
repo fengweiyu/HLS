@@ -1,0 +1,3 @@
+[submodule "HlsServer/src/ThirdSrc/media"]
+	path = HlsServer/src/ThirdSrc/media
+	url = https://github.com/fengweiyu/media.git
