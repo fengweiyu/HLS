@@ -1,5 +1,5 @@
 /*****************************************************************************
-* Copyright (C) 2023-2028 HANGZHOU JFTECH CO., LTD. All rights reserved.
+* Copyright (C) 2023-2028 Hanson Yu  All rights reserved.
 ------------------------------------------------------------------------------
 * File Module       :   FMP4Handle.h
 * Description       :   FMP4Handle operation center
@@ -46,6 +46,9 @@ FMP4Handle::FMP4Handle()
     m_pbFmp4Header = new unsigned char[FMP4_HEADER_BUF_MAX_LEN];
     m_iFmp4HeaderLen = 0;
     m_iFindedKeyFrame = 0;
+
+    m_ddwSegmentPTS=0;
+    m_ddwSegmentDuration=0;
 }
 
 
@@ -122,6 +125,29 @@ int FMP4Handle::GetMuxData(T_Fmp4AnnexbFrameInfo *i_ptFmp4FrameInfo,unsigned cha
             }
         }
         iDataLen+=m_FMP4.CreateSegment(&m_FMP4MediaList,++m_iFragSeq,o_pbBuf+iDataLen,i_dwMaxBufLen-iDataLen);
+        m_ddwSegmentPTS=0;
+        m_ddwSegmentDuration=0;
+        int64_t m_ddwSegmentMinPTS=0;
+        int64_t m_ddwSegmentMaxPTS=0;
+        list<T_Fmp4FrameInfo>::iterator iter = m_FMP4MediaList.begin();//front
+        m_ddwSegmentMinPTS=(int64_t)iter->ddwTimeStamp;
+        m_ddwSegmentMaxPTS=(int64_t)i_ptFmp4FrameInfo->ddwTimeStamp;
+        /*iter = m_FMP4MediaList.back();
+        m_ddwSegmentMaxPTS=(int64_t)iter->ddwTimeStamp;
+        for (iter = m_FMP4MediaList.begin(); iter != m_FMP4MediaList.end(); ++iter)
+        {
+            if((int64_t)iter->ddwTimeStamp<=m_ddwSegmentMinPTS)
+            {
+                m_ddwSegmentMinPTS=(int64_t)iter->ddwTimeStamp;
+            }
+            if((int64_t)iter->ddwTimeStamp>=m_ddwSegmentMaxPTS)
+            {
+                m_ddwSegmentMaxPTS=(int64_t)iter->ddwTimeStamp;
+            }
+        }*/
+        m_ddwSegmentPTS=m_ddwSegmentMinPTS;
+        if(m_ddwSegmentMaxPTS-m_ddwSegmentMinPTS>0)
+            m_ddwSegmentDuration=(m_ddwSegmentMaxPTS-m_ddwSegmentMinPTS);
         DelAllFrame();
         SaveFrame(i_ptFmp4FrameInfo);
     }
@@ -158,7 +184,7 @@ int FMP4Handle::GetMuxHeader(unsigned char * o_pbBuf,unsigned int i_dwMaxBufLen)
         FMP4_LOGW("GetMuxHeader m_iFmp4HeaderLen NULL\r\n");
         return 0;
     }
-    if(m_iFmp4HeaderLen > i_dwMaxBufLen)
+    if(m_iFmp4HeaderLen > (int)i_dwMaxBufLen)
     {
         FMP4_LOGW("GetMuxHeader i_dwMaxBufLen err%d,%d\r\n",m_iFmp4HeaderLen,i_dwMaxBufLen);
         return iRet;
@@ -168,6 +194,31 @@ int FMP4Handle::GetMuxHeader(unsigned char * o_pbBuf,unsigned int i_dwMaxBufLen)
     return iDataLen;
 }
 
+
+/*****************************************************************************
+-Fuction        : FMP4Handle
+-Description    : demux muxer
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version        Author           Modification
+* -----------------------------------------------
+* 2023/09/21      V1.0.0         Yu Weifeng       Created
+******************************************************************************/
+int FMP4Handle::GetDurationAndPTS(int64_t *o_ddwSegmentDuration,int64_t *o_ddwSegmentPTS)
+{
+    int iRet = -1;
+    
+    if(NULL == o_ddwSegmentDuration ||NULL == o_ddwSegmentPTS)
+    {
+        FMP4_LOGE("GetDurationAndPTS err NULL\r\n");
+        return iRet;
+    }
+    *o_ddwSegmentDuration=m_ddwSegmentDuration;
+    *o_ddwSegmentPTS=m_ddwSegmentPTS;
+
+    return 0;
+}
 
 
 
@@ -312,7 +363,7 @@ int FMP4Handle::CreateAudioSpecCfgAAC(unsigned int i_dwFrequency,unsigned int i_
     int iAudioSpecCfgLen = 0;
     unsigned char bProfile = 1;
     unsigned char bAudioObjectType = 0;
-    unsigned char bChannelConfiguration = 0;//声道模式0 = 单声道1 = 双声道（立体声）
+    unsigned char bChannelConfiguration = 0;//音频通道
     unsigned char bSamplingFrequencyIndex = 0;
     int i = 0;
     ///索引表  
@@ -334,7 +385,7 @@ int FMP4Handle::CreateAudioSpecCfgAAC(unsigned int i_dwFrequency,unsigned int i_
         }
     }
     if(i_dwChannels>0)
-        bChannelConfiguration = (unsigned char)(i_dwChannels-1);//声道=通道-1
+        bChannelConfiguration = (unsigned char)(i_dwChannels);
     else
         bChannelConfiguration=0;
     o_pbAudioData[0] = (bAudioObjectType << 3) | (bSamplingFrequencyIndex >> 1);
@@ -407,7 +458,7 @@ int FMP4Handle::GenerateH264ExtraData(T_Fmp4AnnexbVideoEncParam *i_ptVideoEncPar
     unsigned char* pbVideoData = NULL;
     
     if(NULL == i_ptVideoEncParam || NULL == o_pbBuf ||i_ptVideoEncParam->iSizeOfSPS <=0 ||
-    i_dwMaxBufLen < (11+i_ptVideoEncParam->iSizeOfSPS+i_ptVideoEncParam->iSizeOfPPS))
+    (int)i_dwMaxBufLen < (11+i_ptVideoEncParam->iSizeOfSPS+i_ptVideoEncParam->iSizeOfPPS))
     {
         FMP4_LOGE("GenerateH264ExtraData NULL %d,%d \r\n", i_dwMaxBufLen,(11+i_ptVideoEncParam->iSizeOfSPS+i_ptVideoEncParam->iSizeOfPPS));
         return iDataLen;
@@ -462,7 +513,7 @@ int FMP4Handle::GenerateH265ExtraData(T_Fmp4AnnexbVideoEncParam *i_ptVideoEncPar
     T_Fmp4H265ExtraData tFmp4H265ExtraData;
     
     if(NULL == i_ptVideoEncParam || NULL == o_pbBuf ||i_ptVideoEncParam->iSizeOfSPS <=0 ||
-    i_dwMaxBufLen < (23+i_ptVideoEncParam->iSizeOfSPS+i_ptVideoEncParam->iSizeOfPPS+i_ptVideoEncParam->iSizeOfVPS))
+    (int)i_dwMaxBufLen < (23+i_ptVideoEncParam->iSizeOfSPS+i_ptVideoEncParam->iSizeOfPPS+i_ptVideoEncParam->iSizeOfVPS))
     {
         FMP4_LOGE("GenerateH264ExtraData NULL %d,%d \r\n", i_dwMaxBufLen,(23+i_ptVideoEncParam->iSizeOfSPS+i_ptVideoEncParam->iSizeOfPPS));
         return iVideoDataLen;

@@ -17,6 +17,7 @@
 #include "RawAudioHandle.h"
 #include "FlvHandleInterface.h"
 #include "FMP4HandleInterface.h"
+#include "TsInterface.h"
 
 using std::cout;//需要<iostream>
 using std::endl;
@@ -329,6 +330,7 @@ int MediaHandle::GetFrame(T_MediaFrameInfo *m_ptFrame)
 {
     int iRet=FALSE;
     int iReadLen = 0;
+
     
     if(NULL == m_ptFrame)
     {
@@ -338,18 +340,33 @@ int MediaHandle::GetFrame(T_MediaFrameInfo *m_ptFrame)
     
     if(NULL != m_pMediaFile)
     {
+        int iFileSeekFlag = 0;
+        if(0 == m_ptFrame->iFrameProcessedLen)//兼容iFrameProcessedLen每次会清零的情况,
+        {//(为了将接收的部分帧数据重组为完整的一帧,故每次iFrameProcessedLen会清零)
+            iFileSeekFlag=1;//iFrameProcessedLen就变成每次处理的长度，则要从当前位置开始偏移(SEEK_CUR)
+        }//iFrameProcessedLen一直+=没被清零过，则要从文件开头开始偏移(SEEK_SET)
+        long dwPosition = ftell(m_pMediaFile);
         iReadLen = fread(m_ptFrame->pbFrameBuf, 1, m_ptFrame->iFrameBufMaxLen, m_pMediaFile);
         if(iReadLen <= 0)
         {
             MH_LOGE("fread err %d iReadLen%d\r\n",m_ptFrame->iFrameBufMaxLen,iReadLen);
             return iRet;
         }
-        m_ptFrame->iFrameBufLen = iReadLen;
+        m_ptFrame->iFrameBufLen = iReadLen;//(文件流iFrameBufLen每次都会直接赋值,
         iRet = m_pMediaHandle->GetFrame(m_ptFrame);
         if(TRUE == iRet)
         {
-            fseek(m_pMediaFile,m_ptFrame->iFrameProcessedLen,SEEK_SET);
-            //cout<<"fseek m_pMediaFile "<<m_ptFrame->iFrameProcessedLen<<m_pMediaFile<<endl;
+            if(0 != iFileSeekFlag)
+            {//iFrameProcessedLen就变成每次处理的长度，则要从当前位置开始偏移(SEEK_CUR)
+                dwPosition+=m_ptFrame->iFrameProcessedLen;
+            }
+            else
+            {//iFrameProcessedLen一直+=没被清零过，则要从文件开头开始偏移(SEEK_SET)
+                dwPosition=m_ptFrame->iFrameProcessedLen;
+            }
+            fseek(m_pMediaFile,dwPosition,SEEK_SET);
+            m_ptFrame->iFrameBufLen = m_ptFrame->iFrameProcessedLen;//兼容外部使用iFrameBufLen iFrameProcessedLen判断处理是否正常的情况
+            //(文件流iFrameBufLen每次都会直接赋值,所以可以这么兼容)
         }
         else
         {
@@ -460,11 +477,50 @@ int MediaHandle::FrameToContainer(T_MediaFrameInfo *i_ptFrame,E_StreamType i_eSt
         MH_LOGE("FrameToContainer o_pbBuf NULL\r\n");
         return iRet;
     }
-    if(STREAM_TYPE_FMP4_STREAM == i_eStreamType)
+    
+    switch(i_eStreamType)
     {
-        if(NULL == m_pMediaPackHandle)
+        case STREAM_TYPE_TS_STREAM :
         {
-            m_pMediaPackHandle=new FMP4HandleInterface();
+            if(NULL == m_pMediaPackHandle)
+            {
+                m_pMediaPackHandle=new TsInterface();
+            }
+            break;
+        }
+        case STREAM_TYPE_FMP4_STREAM :
+        {
+            if(NULL == m_pMediaPackHandle)
+            {
+                m_pMediaPackHandle=new FMP4HandleInterface();
+            }
+            break;
+        }
+        case STREAM_TYPE_FLV_STREAM :
+        case STREAM_TYPE_ENHANCED_FLV_STREAM :
+        {
+            if(NULL == m_pMediaPackHandle)
+            {
+                m_pMediaPackHandle=new FlvHandleInterface();
+            }
+            break;
+        }
+        case STREAM_TYPE_VIDEO_STREAM :
+        case STREAM_TYPE_AUDIO_STREAM :
+        {
+            if(i_ptFrame->iFrameLen > i_dwMaxBufLen)
+            {
+                MH_LOGE("i_ptFrame->iFrameLen > i_dwMaxBufLen err\r\n");
+                break;
+            }
+            memcpy(o_pbBuf,i_ptFrame->pbFrameStartPos,i_ptFrame->iFrameLen);
+            iRet = i_ptFrame->iFrameLen;
+            break;
+        }
+        default :
+        {
+            MH_LOGE("FrameToContainer i_eStreamType err%d\r\n",i_eStreamType);
+            break;
         }
     }
     if(NULL != m_pMediaPackHandle)
@@ -474,7 +530,7 @@ int MediaHandle::FrameToContainer(T_MediaFrameInfo *i_ptFrame,E_StreamType i_eSt
 
     if(iRet < 0)
     {
-        MH_LOGE("FrameToContainer FALSE:eStreamType%d,%d\r\n",i_eStreamType,i_dwMaxBufLen);
+        MH_LOGE("FrameToContainer FALSE:eStreamType%d,iFrameLen %d\r\n",i_eStreamType,i_ptFrame->iFrameLen);
     }
     
 	return iRet;
