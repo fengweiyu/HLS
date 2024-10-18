@@ -31,7 +31,7 @@
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-HlsServerSession::HlsServerSession(char * i_strPlaySrc)
+HlsServerSession::HlsServerSession(const char * i_strPlaySrc,const char * i_strPlayType)
 {
     m_iM3U8Seq=0;
     m_dwMaxDuration = 0;
@@ -39,6 +39,7 @@ HlsServerSession::HlsServerSession(char * i_strPlaySrc)
     m_iSegmentNum = 0;
     m_pMP4Header = new MP4Header();
     m_pPlaySrc = new string(i_strPlaySrc);
+    m_pPlayType = new string(i_strPlayType);
     m_pMediaHandle = new MediaHandle();
     m_iSessionProcFlag = 0;
     //m_pSessionProc = new thread(&HlsServerSession::Proc, this,0,4*1024*1024);//这种方式需要线程函数带参数
@@ -88,6 +89,7 @@ int HlsServerSession::Proc()
 	int iSleepTimeMS=0;
     unsigned char * pbContainerBuf=NULL;
 	int iContainerHeaderLen=0;
+    E_StreamType eStreamType=STREAM_TYPE_FMP4_STREAM;
 
     m_iSessionProcFlag = 1;
     HLS_LOGW("HlsServerSession start Proc %s\r\n",m_pPlaySrc->c_str());
@@ -97,6 +99,10 @@ int HlsServerSession::Proc()
     tFileFrameInfo.pbFrameBuf = new unsigned char [HLS_FRAME_BUF_MAX_LEN];
     tFileFrameInfo.iFrameBufMaxLen = HLS_FRAME_BUF_MAX_LEN;
     m_pMediaHandle->Init((char *)m_pPlaySrc->c_str());//默认取文件流
+    if(string::npos!=m_pPlayType->find("TS"))
+    {
+        eStreamType=STREAM_TYPE_TS_STREAM;
+    }
     while(m_iSessionProcFlag)
     {
         iRet=m_pMediaHandle->GetFrame(&tFileFrameInfo);//非文件流可直接调用此接口
@@ -113,10 +119,10 @@ int HlsServerSession::Proc()
         iSleepTimeMS=(int)(tFileFrameInfo.dwTimeStamp-dwFileLastTimeStamp);
         if(iSleepTimeMS > 0)
         {
-            SleepMs(iSleepTimeMS);//模拟实时流(直播)，点播和当前的处理机制不匹配，需要后续再开发
+            //SleepMs((iSleepTimeMS));//模拟实时流(直播)，点播和当前的处理机制不匹配，需要后续再开发
         }
         iContainerHeaderLen = 0;
-        iRet=m_pMediaHandle->FrameToContainer(&tFileFrameInfo,STREAM_TYPE_FMP4_STREAM,pbContainerBuf,HLS_MP4_BUF_MAX_LEN,&iContainerHeaderLen);
+        iRet=m_pMediaHandle->FrameToContainer(&tFileFrameInfo,eStreamType,pbContainerBuf,HLS_MP4_BUF_MAX_LEN,&iContainerHeaderLen);
         if(iRet<0)
         {
             HLS_LOGE("FrameToContainer err exit %d[%s]\r\n",iRet,m_pPlaySrc->c_str());
@@ -133,6 +139,11 @@ int HlsServerSession::Proc()
             else
             {
                 SaveContainerData(pbContainerBuf,iRet,(tFileFrameInfo.dwTimeStamp-dwLastSegTimeStamp));
+            }
+            iSleepTimeMS=(int)(tFileFrameInfo.dwTimeStamp-dwLastSegTimeStamp);
+            if(iSleepTimeMS > 0)
+            {
+                SleepMs((iSleepTimeMS-0));//这样更准
             }
             dwLastSegTimeStamp = tFileFrameInfo.dwTimeStamp;
         }
@@ -161,14 +172,15 @@ int HlsServerSession::Proc()
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int HlsServerSession::GetM3U8(char *o_strRes,int i_iResMaxLen)
+int HlsServerSession::GetM3U8(string *i_pPlayType,char *o_strRes,int i_iResMaxLen)
 {
     int iRet = -1;
     char strMp4List[256];
     int iListLen=0;
     unsigned int dwMaxDuration=0;//ms
     float  fTime = 0;
-    
+    int iStreamType=7;//7 fmp4,3 ts
+
     if(NULL == o_strRes|| i_iResMaxLen <= 0)
     {
         HLS_LOGE("GetM3U8 NULL \r\n");
@@ -189,8 +201,13 @@ int HlsServerSession::GetM3U8(char *o_strRes,int i_iResMaxLen)
         SleepMs(10);
     }
     
+    if(string::npos!=m_pPlayType->find("TS"))
+    {
+        iStreamType=3;
+    }
     memset(strMp4List,0,sizeof(strMp4List));
     //if(0 == m_iM3U8Seq)//ios 要求每段前面都要有moov，否则无法播放
+    if(7==iStreamType)
     {
         iListLen = snprintf(strMp4List,sizeof(strMp4List),"#EXT-X-MAP:URI=\"%s_init.mp4\",\r\n",m_pPlaySrc->c_str());
     }
@@ -212,7 +229,7 @@ int HlsServerSession::GetM3U8(char *o_strRes,int i_iResMaxLen)
         "#EXT-X-MEDIA-SEQUENCE:%d\r\n"
         "#EXT-X-TARGETDURATION:%d\r\n"
         "%s",
-        7,//7 fmp4,3 ts
+        iStreamType,//7 fmp4,3 ts
         ++m_iM3U8Seq,dwMaxDuration/1000,strMp4List);//考虑让m_iM3U8Seq使用第一个包的iter->second->dwSeq
     
     return iRet;
@@ -263,6 +280,34 @@ int HlsServerSession::GetMP4(const char * i_strMp4Name,char *o_strRes,int i_iRes
     }
     return iRet;
 }
+/*****************************************************************************
+-Fuction        : GetTS
+-Description    : //return ResLen,<0 err
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int HlsServerSession::GetTS(const char * i_strName,char *o_strRes,int i_iResMaxLen)
+{
+    int iRet = -1;
+    
+    if(NULL == i_strName|| NULL == o_strRes|| i_iResMaxLen <= 0)
+    {
+        HLS_LOGE("GetTS NULL \r\n");
+        return iRet;
+    }
+    if(0 == GetProcFlag())
+    {
+        HLS_LOGE("GetTS exit \r\n");
+        return iRet;
+    }
+    HLS_LOGD("GetTS i_strName %s \r\n",i_strName);
+    iRet = GetContainerData(i_strName,o_strRes,i_iResMaxLen);
+    return iRet;
+}
 
 /*****************************************************************************
 -Fuction        : SaveContainerData
@@ -306,14 +351,21 @@ int HlsServerSession::SaveContainerData(unsigned char * i_pbBuf, unsigned int i_
         return iRet;
     }
     memset(strName,0,sizeof(strName));
-    snprintf(strName,sizeof(strName),"%s_%d.mp4",m_pPlaySrc->c_str(),++m_iSegmentNum);
+    if(string::npos!=m_pPlayType->find("TS"))
+    {
+        snprintf(strName,sizeof(strName),"%s_%d.ts",m_pPlaySrc->c_str(),++m_iSegmentNum);
+    }
+    else
+    {
+        snprintf(strName,sizeof(strName),"%s_%d.mp4",m_pPlaySrc->c_str(),++m_iSegmentNum);
+    }
     strSegName.assign(strName);
     memcpy(pMP4Stream->abBuf,i_pbBuf,i_dwBufLen);
     pMP4Stream->dwBufCurLen=i_dwBufLen;
     pMP4Stream->dwDuration=i_dwDuration;
     pMP4Stream->strName.assign(strName);
     std::lock_guard<std::mutex> lock(m_MapMtx);//std::lock_guard对象会在其作用域结束时自动释放互斥量
-    if(m_MP4StreamMap.size()>=3)
+    if(m_MP4StreamMap.size()>=3)//=3
     {
         map<int, MP4Stream*>::iterator iter = m_MP4StreamMap.begin();
         MP4Stream *pStream = iter->second;
@@ -336,22 +388,22 @@ int HlsServerSession::SaveContainerData(unsigned char * i_pbBuf, unsigned int i_
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int HlsServerSession::GetContainerData(const char * i_strMp4Name,char *o_strRes,int i_iResMaxLen)
+int HlsServerSession::GetContainerData(const char * i_strName,char *o_strRes,int i_iResMaxLen)
 {
     int iRet = -1;
     
-    if(NULL == i_strMp4Name ||NULL == o_strRes|| i_iResMaxLen <= 0)
+    if(NULL == i_strName ||NULL == o_strRes|| i_iResMaxLen <= 0)
     {
         HLS_LOGE("GetContainerData NULL \r\n");
         return iRet;
     }
-    string strMp4StreamName(i_strMp4Name);
+    string strStreamName(i_strName);
     std::lock_guard<std::mutex> lock(m_MapMtx);//std::lock_guard对象会在其作用域结束时自动释放互斥量
     for (map<int, MP4Stream*>::iterator iter = m_MP4StreamMap.begin(); iter != m_MP4StreamMap.end();)
     {
-        if(strMp4StreamName == iter->second->strName)
+        if(strStreamName == iter->second->strName)
         {
-            HLS_LOGW("GetMP4 %s\r\n", strMp4StreamName.c_str());
+            HLS_LOGW("GetContainerData %s\r\n", strStreamName.c_str());
             if(iter->second->dwBufCurLen>0 && iter->second->dwBufCurLen<=i_iResMaxLen)
             {
                 memcpy(o_strRes,iter->second->abBuf,iter->second->dwBufCurLen);
@@ -373,7 +425,7 @@ int HlsServerSession::GetContainerData(const char * i_strMp4Name,char *o_strRes,
     if(iRet<=0)
     {//没找到则用最近的数据
         map<int, MP4Stream *>::iterator iter = m_MP4StreamMap.begin();//map按照键值first从小到大排序
-        HLS_LOGW("GetMP4 no find %s,%d,%s\r\n", strMp4StreamName.c_str(),iter->first,iter->second->strName.c_str());
+        HLS_LOGW("GetContainerData no find %s,%d,%s\r\n", strStreamName.c_str(),iter->first,iter->second->strName.c_str());
         if(iter->second->dwBufCurLen>0 && iter->second->dwBufCurLen<=i_iResMaxLen)
         {
             memcpy(o_strRes,iter->second->abBuf,iter->second->dwBufCurLen);
@@ -381,7 +433,7 @@ int HlsServerSession::GetContainerData(const char * i_strMp4Name,char *o_strRes,
         }
         else
         {
-            HLS_LOGE("GetMP4   err iter->second->dwBufCurLen%d,i_iResMaxLen %d err \r\n",iter->second->dwBufCurLen,i_iResMaxLen);
+            HLS_LOGE("GetContainerData   err iter->second->dwBufCurLen%d,i_iResMaxLen %d err \r\n",iter->second->dwBufCurLen,i_iResMaxLen);
         }
     }
     return iRet;

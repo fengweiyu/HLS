@@ -74,18 +74,20 @@ public:
 class HlsServerSession
 {
 public:
-	HlsServerSession(char * i_strPlaySrc);
+	HlsServerSession(const char * i_strPlaySrc,const char * i_strPlayType);
 	virtual ~HlsServerSession();
 	int Proc();//打包线程
-    int GetM3U8(char *o_strRes,int i_iResMaxLen);//return ResLen,<0 err
+    int GetM3U8(string *i_pPlayType,char *o_strRes,int i_iResMaxLen);//return ResLen,<0 err
     int GetMP4(const char * i_strMp4Name,char *o_strRes,int i_iResMaxLen);//return ResLen,<0 err
+    int GetTS(const char * i_strName,char *o_strRes,int i_iResMaxLen);//return ResLen,<0 err
     int GetProcFlag();
 private:
     int GetStreamMapSize();
     int SaveContainerData(unsigned char * i_pbBuf, unsigned int i_dwBufLen, unsigned int i_dwDuration);
-    int GetContainerData(const char * i_strMp4Name,char *o_strRes,int i_iResMaxLen);
+    int GetContainerData(const char * i_strName,char *o_strRes,int i_iResMaxLen);
         
     string *m_pPlaySrc;
+    string *m_pPlayType;
     MediaHandle *m_pMediaHandle;
     thread * m_pSessionProc;
 	int m_iSessionProcFlag;

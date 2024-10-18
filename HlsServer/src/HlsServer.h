@@ -31,8 +31,8 @@ public:
     int HandleHttpReq(const char * i_strReq,char *o_strRes,int i_iResMaxLen);//return ResLen,<0 err
     
 private:
-    int HandleReqGetM3U8(string *i_pPlaySrc,char *o_strRes,int i_iResMaxLen);
-    int HandleReqGetMP4(string *i_pPlaySrc,string *i_pMp4Name,char *o_strRes,int i_iResMaxLen);
+    int HandleReqGetM3U8(string *i_pPlaySrc,string *i_pPlayType,char *o_strRes,int i_iResMaxLen);
+    int HandleReqGetMedia(string *i_pPlaySrc,string *i_pMediaName,char *o_strRes,int i_iResMaxLen);
     int SavePlaySrc(string *i_strPlaySrc,HlsServerSession *i_pHlsServerSession);
     HlsServerSession * GetSamePlaySession(string &i_strPlaySrc);
     int CheckPlaySrc();

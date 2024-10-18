@@ -160,7 +160,7 @@ int LinuxCRegex(const char *i_strPattern,char *i_strBuf,string * o_aMatch,int i_
 
 
 #define HLS_M3U8_MAX_LEN       (10*1024)
-#define HLS_MP4_MAX_LEN       (3*1024*1024)
+#define HLS_MEDIA_MAX_LEN       (3*1024*1024)
 
 /*****************************************************************************
 -Fuction        : HlsServer
@@ -247,7 +247,7 @@ int HlsServer::HandleHttpReq(const char * i_strReq,char *o_strRes,int i_iResMaxL
             string strFileName(astrRegex[2].c_str());
             string strStreamPacket(astrRegex[3].c_str());
             HLS_LOGW("%d,file m_pFileName %s,strStreamPacket %s\r\n",iRet,strFileName.c_str(),strStreamPacket.c_str());
-            iRet = HandleReqGetM3U8(&strFileName,o_strRes,i_iResMaxLen);
+            iRet = HandleReqGetM3U8(&strFileName,&strStreamPacket,o_strRes,i_iResMaxLen);
             return iRet;
         } 
         const char * strMP4Pattern = "/([A-Za-z]+)/([A-Za-z0-9._]+)/([A-Za-z0-9_.]+).mp4";//http://localhost:9210/file/H264AAC.flv/H264AAC.flv_init.mp4
@@ -259,7 +259,19 @@ int HlsServer::HandleHttpReq(const char * i_strReq,char *o_strRes,int i_iResMaxL
             string strMp4FileName(astrRegex[3].c_str());
             strMp4FileName.append(".mp4");
             HLS_LOGW("%d,file mp4 strSSRC %s strMp4FileName %s\r\n",iRet,strSSRC.c_str(),strMp4FileName.c_str());
-            iRet = HandleReqGetMP4(&strSSRC,&strMp4FileName,o_strRes,i_iResMaxLen);
+            iRet = HandleReqGetMedia(&strSSRC,&strMp4FileName,o_strRes,i_iResMaxLen);
+            return iRet;
+        } 
+        const char * strTsPattern = "/([A-Za-z]+)/([A-Za-z0-9._]+)/([A-Za-z0-9_.]+).ts";//http://localhost:9210/file/H264AAC.flv/H264AAC.flv_init.ts
+        iRet=this->HlsRegex(strTsPattern,tHttpReqPacket.strURL,astrRegex,HLS_MAX_MATCH_NUM);
+        if (iRet>3) //0是整行
+        {
+            string strStreamType(astrRegex[1].c_str());//file
+            string strSSRC(astrRegex[2].c_str());
+            string strFileName(astrRegex[3].c_str());
+            strFileName.append(".ts");
+            HLS_LOGW("%d,file ts strSSRC %s strTs %s\r\n",iRet,strSSRC.c_str(),strFileName.c_str());
+            iRet = HandleReqGetMedia(&strSSRC,&strFileName,o_strRes,i_iResMaxLen);
             return iRet;
         } 
     }
@@ -276,15 +288,16 @@ int HlsServer::HandleHttpReq(const char * i_strReq,char *o_strRes,int i_iResMaxL
 }
 /*****************************************************************************
 -Fuction        : HandleReqGetM3U8
--Description    : //return ResLen,<0 err
+-Description    : SavePlaySrc 后续优化为i_pPlaySrc/i_pPlayType，
+现在不允许同时播放同一文件的ts和fmp4流
 -Input          : 
 -Output         : 
--Return         : 
+-Return         : //return ResLen,<0 err
 * Modify Date     Version             Author           Modification
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int HlsServer::HandleReqGetM3U8(string *i_pPlaySrc,char *o_strRes,int i_iResMaxLen)
+int HlsServer::HandleReqGetM3U8(string *i_pPlaySrc,string *i_pPlayType,char *o_strRes,int i_iResMaxLen)
 {
     int iRet = -1;
     HlsServerSession *pHlsServerSession = NULL;
@@ -300,11 +313,11 @@ int HlsServer::HandleReqGetM3U8(string *i_pPlaySrc,char *o_strRes,int i_iResMaxL
     pHlsServerSession=GetSamePlaySession(*i_pPlaySrc);
     if(NULL == pHlsServerSession)
     {
-        pHlsServerSession = new HlsServerSession((char *)i_pPlaySrc->c_str());
+        pHlsServerSession = new HlsServerSession(i_pPlaySrc->c_str(),i_pPlayType->c_str());
         SavePlaySrc(i_pPlaySrc,pHlsServerSession);
     }
     pcM3U8 = new char [HLS_M3U8_MAX_LEN];//后续优化
-    iM3U8Len = pHlsServerSession->GetM3U8(pcM3U8,HLS_M3U8_MAX_LEN);
+    iM3U8Len = pHlsServerSession->GetM3U8(i_pPlayType,pcM3U8,HLS_M3U8_MAX_LEN);
     if(iM3U8Len <= 0)
     {
         HLS_LOGE("HandleReqGetMP4 err \r\n");
@@ -340,14 +353,14 @@ int HlsServer::HandleReqGetM3U8(string *i_pPlaySrc,char *o_strRes,int i_iResMaxL
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int HlsServer::HandleReqGetMP4(string *i_pPlaySrc,string *i_pMp4Name,char *o_strRes,int i_iResMaxLen)
+int HlsServer::HandleReqGetMedia(string *i_pPlaySrc,string *i_pMediaName,char *o_strRes,int i_iResMaxLen)
 {
     int iRet = -1;
     HlsServerSession *pHlsServerSession = NULL;
-    char *pcMP4 = NULL;
-    int iMP4Len = -1;
+    char *pcMedia = NULL;
+    int iLen = -1;
 
-    if(NULL == i_pPlaySrc || NULL == i_pMp4Name || NULL == o_strRes|| i_iResMaxLen <= 0)
+    if(NULL == i_pPlaySrc || NULL == i_pMediaName || NULL == o_strRes|| i_iResMaxLen <= 0)
     {
         HLS_LOGE("HandleReqGetMP4 NULL \r\n");
         return iRet;
@@ -356,12 +369,21 @@ int HlsServer::HandleReqGetMP4(string *i_pPlaySrc,string *i_pMp4Name,char *o_str
     pHlsServerSession=GetSamePlaySession(*i_pPlaySrc);
     if(NULL == pHlsServerSession)
     {
-        pHlsServerSession = new HlsServerSession((char *)i_pPlaySrc->c_str());
-        SavePlaySrc(i_pPlaySrc,pHlsServerSession);
+        //pHlsServerSession = new HlsServerSession((char *)i_pPlaySrc->c_str());
+        //SavePlaySrc(i_pPlaySrc,pHlsServerSession);
+        HLS_LOGE("HandleReqGet NULL == pHlsServerSession \r\n");
+        return iRet;
     }
-    pcMP4 = new char [HLS_MP4_MAX_LEN];//后续优化
-    iMP4Len = pHlsServerSession->GetMP4(i_pMp4Name->c_str(),pcMP4,HLS_MP4_MAX_LEN);
-    if(iMP4Len <= 0)
+    pcMedia = new char [HLS_MEDIA_MAX_LEN];//后续优化
+    if(string::npos!= i_pMediaName->find("ts"))
+    {
+        iLen = pHlsServerSession->GetTS(i_pMediaName->c_str(),pcMedia,HLS_MEDIA_MAX_LEN);
+    }
+    else
+    {
+        iLen = pHlsServerSession->GetMP4(i_pMediaName->c_str(),pcMedia,HLS_MEDIA_MAX_LEN);
+    }
+    if(iLen <= 0)
     {
         HLS_LOGE("HandleReqGetMP4 err \r\n");
         HttpServer *pHttpServer=new HttpServer();
@@ -377,11 +399,11 @@ int HlsServer::HandleReqGetMP4(string *i_pPlaySrc,string *i_pMp4Name,char *o_str
     iRet|=pHttpServer->SetResHeaderValue("Connection", "Keep-Alive");
     iRet|=pHttpServer->SetResHeaderValue("Content-Type", "video/mp2t");
     iRet|=pHttpServer->SetResHeaderValue("Accept-Ranges", "bytes");//
-    iRet|=pHttpServer->SetResHeaderValue("Content-Length", iMP4Len);
+    iRet|=pHttpServer->SetResHeaderValue("Content-Length", iLen);
     iRet|=pHttpServer->SetResHeaderValue("Access-Control-Allow-Origin", "*");
-    iRet=pHttpServer->FormatResToStream(pcMP4,iMP4Len,o_strRes,i_iResMaxLen);
+    iRet=pHttpServer->FormatResToStream(pcMedia,iLen,o_strRes,i_iResMaxLen);
     delete pHttpServer;
-    delete [] pcMP4;
+    delete [] pcMedia;
     return iRet;
 }
 
