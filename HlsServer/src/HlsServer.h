@@ -33,8 +33,8 @@ public:
 private:
     int HandleReqGetM3U8(string *i_pPlaySrc,string *i_pPlayType,char *o_strRes,int i_iResMaxLen);
     int HandleReqGetMedia(string *i_pPlaySrc,string *i_pMediaName,char *o_strRes,int i_iResMaxLen);
-    int SavePlaySrc(string *i_strPlaySrc,HlsServerSession *i_pHlsServerSession);
-    HlsServerSession * GetSamePlaySession(string &i_strPlaySrc);
+    int SavePlaySrc(string *i_strPlayID,HlsServerSession *i_pHlsServerSession);
+    HlsServerSession * GetSamePlaySession(string &i_strPlayID);
     int CheckPlaySrc();
     int HlsRegex(const char *i_strPattern,char *i_strBuf,string * o_aMatch,int i_iMatchMaxCnt);
     

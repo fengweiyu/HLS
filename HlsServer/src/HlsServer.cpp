@@ -303,18 +303,32 @@ int HlsServer::HandleReqGetM3U8(string *i_pPlaySrc,string *i_pPlayType,char *o_s
     HlsServerSession *pHlsServerSession = NULL;
     char *pcM3U8 = NULL;
     int iM3U8Len = -1;
+    string strPlayID;
     
     if(NULL == i_pPlaySrc || NULL == o_strRes|| i_iResMaxLen <= 0)
     {
         HLS_LOGE("HandleReqGetM3U8 NULL \r\n");
         return iRet;
     }
-    
-    pHlsServerSession=GetSamePlaySession(*i_pPlaySrc);
+    strPlayID.assign(i_pPlaySrc->c_str());
+    if (string::npos !=i_pPlayType->find("MP4"))
+    {
+        strPlayID.append(".mp4");
+    }
+    else if (string::npos !=i_pPlayType->find("TS"))
+    {
+        strPlayID.append(".ts");
+    }
+    else
+    {
+        HLS_LOGE("HandleReqGetM3U8 err i_pPlayType: %s\r\n",i_pPlayType->c_str());
+        return iRet;
+    }
+    pHlsServerSession=GetSamePlaySession(strPlayID);
     if(NULL == pHlsServerSession)
     {
         pHlsServerSession = new HlsServerSession(i_pPlaySrc->c_str(),i_pPlayType->c_str());
-        SavePlaySrc(i_pPlaySrc,pHlsServerSession);
+        SavePlaySrc(&strPlayID,pHlsServerSession);
     }
     pcM3U8 = new char [HLS_M3U8_MAX_LEN];//后续优化
     iM3U8Len = pHlsServerSession->GetM3U8(i_pPlayType,pcM3U8,HLS_M3U8_MAX_LEN);
@@ -359,14 +373,28 @@ int HlsServer::HandleReqGetMedia(string *i_pPlaySrc,string *i_pMediaName,char *o
     HlsServerSession *pHlsServerSession = NULL;
     char *pcMedia = NULL;
     int iLen = -1;
+    string strPlayID;
 
     if(NULL == i_pPlaySrc || NULL == i_pMediaName || NULL == o_strRes|| i_iResMaxLen <= 0)
     {
         HLS_LOGE("HandleReqGetMP4 NULL \r\n");
         return iRet;
     }
-    
-    pHlsServerSession=GetSamePlaySession(*i_pPlaySrc);
+    strPlayID.assign(i_pPlaySrc->c_str());
+    if (string::npos !=i_pMediaName->find("mp4"))
+    {
+        strPlayID.append(".mp4");
+    }
+    else if (string::npos !=i_pMediaName->find("ts"))
+    {
+        strPlayID.append(".ts");
+    }
+    else
+    {
+        HLS_LOGE("HandleReqGetM3U8 err i_pPlayType: %s\r\n",i_pMediaName->c_str());
+        return iRet;
+    }
+    pHlsServerSession=GetSamePlaySession(strPlayID);
     if(NULL == pHlsServerSession)
     {
         //pHlsServerSession = new HlsServerSession((char *)i_pPlaySrc->c_str());
@@ -417,7 +445,7 @@ int HlsServer::HandleReqGetMedia(string *i_pPlaySrc,string *i_pMediaName,char *o
 * -----------------------------------------------
 * 2023/09/21      V1.0.0         Yu Weifeng       Created
 ******************************************************************************/
-int HlsServer::SavePlaySrc(string *i_strPlaySrc,HlsServerSession *i_pHlsServerSession)
+int HlsServer::SavePlaySrc(string *i_strPlayID,HlsServerSession *i_pHlsServerSession)
 {
     if(NULL == i_pHlsServerSession)
     {
@@ -425,7 +453,7 @@ int HlsServer::SavePlaySrc(string *i_strPlaySrc,HlsServerSession *i_pHlsServerSe
         return -1;
     }
     std::lock_guard<std::mutex> lock(m_MapMtx);//std::lock_guard对象会在其作用域结束时自动释放互斥量
-    m_HlsSessionMap.insert(make_pair(*i_strPlaySrc,i_pHlsServerSession));
+    m_HlsSessionMap.insert(make_pair(*i_strPlayID,i_pHlsServerSession));
     return 0;
 }
 /*****************************************************************************
@@ -438,7 +466,7 @@ int HlsServer::SavePlaySrc(string *i_strPlaySrc,HlsServerSession *i_pHlsServerSe
 * -----------------------------------------------
 * 2023/09/21      V1.0.0         Yu Weifeng       Created
 ******************************************************************************/
-HlsServerSession * HlsServer::GetSamePlaySession(string &i_strPlaySrc)
+HlsServerSession * HlsServer::GetSamePlaySession(string &i_strPlayID)
 {
     HlsServerSession *pHlsServerSession = NULL;
     
@@ -449,7 +477,7 @@ HlsServerSession * HlsServer::GetSamePlaySession(string &i_strPlaySrc)
     }
     for (map<string, HlsServerSession *>::iterator iter = m_HlsSessionMap.begin(); iter != m_HlsSessionMap.end(); ++iter)
     {
-        if(i_strPlaySrc == iter->first)
+        if(i_strPlayID == iter->first)
         {
             pHlsServerSession = iter->second;
             break;
