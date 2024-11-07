@@ -60,7 +60,13 @@ https://localhost:9211/file/H264AAC.flv/testFMP4.m3u8
 static void PrintUsage(char *i_strProcName)
 {
     printf("Usage: %s ServerPort \r\n",i_strProcName);
-    printf("run default args: %s 9212 \r\n",i_strProcName);
+    printf("run default args: %s 9210 \r\n",i_strProcName);
+    printf("hls url eg: http://localhost:9210/file/H264AAC.flv/testTS.m3u8\r\n");
+    printf("hls url eg: http://localhost:9210/file/H265AAC.flv/testTS.m3u8\r\n");
+    printf("hls url eg: http://localhost:9210/file/H264AAC.flv/testFMP4.m3u8\r\n");
+    printf("hls url eg: http://localhost:9210/file/H265AAC.flv/testFMP4.m3u8\r\n");
+    printf("hls url eg: https://yuweifeng.top:9211/file/H264AAC.flv/testTS.m3u8\r\n");
+    printf("hls url eg: https://yuweifeng.top:9211/file/H265AAC.flv/testTS.m3u8\r\n");
     printf("hls url eg: https://yuweifeng.top:9211/file/H264AAC.flv/testFMP4.m3u8\r\n");
     printf("hls url eg: https://yuweifeng.top:9211/file/H265AAC.flv/testFMP4.m3u8\r\n");
 }
