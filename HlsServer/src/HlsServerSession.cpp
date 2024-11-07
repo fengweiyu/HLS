@@ -119,7 +119,7 @@ int HlsServerSession::Proc()
         iSleepTimeMS=(int)(tFileFrameInfo.dwTimeStamp-dwFileLastTimeStamp);
         if(iSleepTimeMS > 0)
         {
-            //SleepMs((iSleepTimeMS));//模拟实时流(直播)，点播和当前的处理机制不匹配，需要后续再开发
+            SleepMs((iSleepTimeMS));//模拟实时流(直播)，点播和当前的处理机制不匹配，需要后续再开发
         }
         iContainerHeaderLen = 0;
         iRet=m_pMediaHandle->FrameToContainer(&tFileFrameInfo,eStreamType,pbContainerBuf,HLS_MP4_BUF_MAX_LEN,&iContainerHeaderLen);
@@ -143,7 +143,7 @@ int HlsServerSession::Proc()
             iSleepTimeMS=(int)(tFileFrameInfo.dwTimeStamp-dwLastSegTimeStamp);
             if(iSleepTimeMS > 0)
             {
-                SleepMs((iSleepTimeMS-0));//这样更准
+                //SleepMs((iSleepTimeMS-0));//这样更准，
             }
             dwLastSegTimeStamp = tFileFrameInfo.dwTimeStamp;
         }
@@ -365,7 +365,7 @@ int HlsServerSession::SaveContainerData(unsigned char * i_pbBuf, unsigned int i_
     pMP4Stream->dwDuration=i_dwDuration;
     pMP4Stream->strName.assign(strName);
     std::lock_guard<std::mutex> lock(m_MapMtx);//std::lock_guard对象会在其作用域结束时自动释放互斥量
-    if(m_MP4StreamMap.size()>=3)//=3
+    if(m_MP4StreamMap.size()>=3)//>=3
     {
         map<int, MP4Stream*>::iterator iter = m_MP4StreamMap.begin();
         MP4Stream *pStream = iter->second;
