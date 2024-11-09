@@ -85,7 +85,8 @@ private:
     int GetStreamMapSize();
     int SaveContainerData(unsigned char * i_pbBuf, unsigned int i_dwBufLen, unsigned int i_dwDuration);
     int GetContainerData(const char * i_strName,char *o_strRes,int i_iResMaxLen);
-        
+    unsigned int GetTickCount();  // milliseconds
+
     string *m_pPlaySrc;
     string *m_pPlayType;
     MediaHandle *m_pMediaHandle;

@@ -72,7 +72,11 @@ HlsServerSession::~HlsServerSession()
 }
 /*****************************************************************************
 -Fuction        : Proc
--Description    : //return ResLen,<0 err
+-Description    : 使用视频帧时间戳休眠来打包，耗时会比段时间久，播放器后面都会卡
+使用段(gop)时间来休眠打包，耗时准但是不够稳定，对于追最新包的播放器来说，
+    会跳包拿最新的包，但是最新的包有时打的会慢一些，则会造成卡顿
+    但是对于有缓存的播放器，还是比较流畅
+后续可以改为请求数据的时候立马打包，这样打包的逻辑处理是比较快的
 -Input          : 
 -Output         : 
 -Return         : 
@@ -90,6 +94,9 @@ int HlsServerSession::Proc()
     unsigned char * pbContainerBuf=NULL;
 	int iContainerHeaderLen=0;
     E_StreamType eStreamType=STREAM_TYPE_FMP4_STREAM;
+	unsigned int dwFileCurTick=0;
+	unsigned int dwFileLastTick=0;
+	unsigned int dwSleepStamp=0;
 
     m_iSessionProcFlag = 1;
     HLS_LOGW("HlsServerSession start Proc %s\r\n",m_pPlaySrc->c_str());
@@ -116,11 +123,23 @@ int HlsServerSession::Proc()
             HLS_LOGE("dwTimeStamp err exit %d,%d\r\n",tFileFrameInfo.dwTimeStamp,dwFileLastTimeStamp);
             break;
         }
-        iSleepTimeMS=(int)(tFileFrameInfo.dwTimeStamp-dwFileLastTimeStamp);
-        if(iSleepTimeMS > 0)
+        if(0 == dwFileLastTimeStamp && 0 == dwFileLastTick)
         {
-            SleepMs((iSleepTimeMS));//模拟实时流(直播)，点播和当前的处理机制不匹配，需要后续再开发
+            dwFileLastTimeStamp=tFileFrameInfo.dwTimeStamp;
+            dwFileLastTick = GetTickCount();
+            dwSleepStamp=tFileFrameInfo.dwTimeStamp;
         }
+        if(tFileFrameInfo.eFrameType == MEDIA_FRAME_TYPE_VIDEO_I_FRAME||tFileFrameInfo.eFrameType == MEDIA_FRAME_TYPE_VIDEO_P_FRAME||tFileFrameInfo.eFrameType == MEDIA_FRAME_TYPE_VIDEO_B_FRAME)
+        {//音视频时间可能不同源，所以要判断
+            dwSleepStamp=tFileFrameInfo.dwTimeStamp;//即使同源，有可能也是不准的，以视频的为准。这样还是会慢一点
+        }//如果只判断I帧则和下面使用segment时间休眠效果一样，
+        iSleepTimeMS=(int)(dwSleepStamp-dwFileLastTimeStamp);
+        dwFileCurTick=GetTickCount();
+        if((int)(dwFileCurTick-dwFileLastTick) <= iSleepTimeMS)
+        {
+            SleepMs((iSleepTimeMS-(dwFileCurTick-dwFileLastTick)));//模拟实时流(直播)，点播和当前的处理机制不匹配，需要后续再开发
+        }
+        dwFileLastTick = GetTickCount();
         iContainerHeaderLen = 0;
         iRet=m_pMediaHandle->FrameToContainer(&tFileFrameInfo,eStreamType,pbContainerBuf,HLS_MP4_BUF_MAX_LEN,&iContainerHeaderLen);
         if(iRet<0)
@@ -140,14 +159,18 @@ int HlsServerSession::Proc()
             {
                 SaveContainerData(pbContainerBuf,iRet,(tFileFrameInfo.dwTimeStamp-dwLastSegTimeStamp));
             }
+            HLS_LOGD("%d FrameToContainer [%d]\r\n",(dwFileLastTick&0x7fffffff)/1000,m_iSegmentNum);
             iSleepTimeMS=(int)(tFileFrameInfo.dwTimeStamp-dwLastSegTimeStamp);
             if(iSleepTimeMS > 0)
             {
-                //SleepMs((iSleepTimeMS-0));//这样更准，
+                //SleepMs((iSleepTimeMS-0));//这样更准，比客户端取流过来的时间会快一点
             }
             dwLastSegTimeStamp = tFileFrameInfo.dwTimeStamp;
         }
-        dwFileLastTimeStamp = tFileFrameInfo.dwTimeStamp;
+        if(tFileFrameInfo.eFrameType == MEDIA_FRAME_TYPE_VIDEO_I_FRAME||tFileFrameInfo.eFrameType == MEDIA_FRAME_TYPE_VIDEO_P_FRAME||tFileFrameInfo.eFrameType == MEDIA_FRAME_TYPE_VIDEO_B_FRAME)
+        {
+            dwFileLastTimeStamp = tFileFrameInfo.dwTimeStamp;
+        }
     }
     if(NULL!= pbContainerBuf)
     {
@@ -452,5 +475,26 @@ int HlsServerSession::GetContainerData(const char * i_strName,char *o_strRes,int
 int HlsServerSession :: GetProcFlag()
 {
     return m_iSessionProcFlag;//多线程竞争注意优化
+}
+/*****************************************************************************
+-Fuction        : GetTickCount
+-Description    : // 返回自系统开机以来的毫秒数
+-Input          : 
+-Output         : 
+-Return         : len
+* Modify Date     Version        Author           Modification
+* -----------------------------------------------
+* 2023/09/21      V1.0.0         Yu Weifeng       Created
+******************************************************************************/
+unsigned int HlsServerSession::GetTickCount()	// milliseconds
+{
+#ifdef _WIN32
+	return ::GetTickCount64() & 0xFFFFFFFF;
+#else  
+	struct timespec ts;
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	uint64_t cnt = ts.tv_sec * 1000ULL + ts.tv_nsec / 1000000ULL;
+	return cnt & 0xFFFFFFFF;
+#endif
 }
 
