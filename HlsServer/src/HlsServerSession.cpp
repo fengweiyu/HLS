@@ -137,7 +137,7 @@ int HlsServerSession::Proc()
         dwFileCurTick=GetTickCount();
         if((int)(dwFileCurTick-dwFileLastTick) <= iSleepTimeMS)
         {
-            SleepMs((iSleepTimeMS-(dwFileCurTick-dwFileLastTick)));//模拟实时流(直播)，点播和当前的处理机制不匹配，需要后续再开发
+            //SleepMs((iSleepTimeMS-(dwFileCurTick-dwFileLastTick)));//模拟实时流(直播)，点播和当前的处理机制不匹配，需要后续再开发
         }
         dwFileLastTick = GetTickCount();
         iContainerHeaderLen = 0;
@@ -163,7 +163,7 @@ int HlsServerSession::Proc()
             iSleepTimeMS=(int)(tFileFrameInfo.dwTimeStamp-dwLastSegTimeStamp);
             if(iSleepTimeMS > 0)
             {
-                //SleepMs((iSleepTimeMS-0));//这样更准，比客户端取流过来的时间会快一点
+                SleepMs((iSleepTimeMS-0));//这样更准，比客户端取流过来的时间会快一点
             }
             dwLastSegTimeStamp = tFileFrameInfo.dwTimeStamp;
         }
