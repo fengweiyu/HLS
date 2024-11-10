@@ -12,8 +12,8 @@
       <div class="box">
         <button id="startButton">start</button>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button id="stopButton">stop</button>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button id="h264Button">h264</button>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button id="h265Button">h265</button>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button id="h264_5Button">h264/h265</button>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button id="formatButton">TS/FMP4</button>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button id="defaultButton">default</button>
       </div>
       <video height="600" id="video" controls></video>
@@ -22,25 +22,39 @@
     <script>
       const startButton = document.getElementById('startButton');
       const stopButton = document.getElementById('stopButton');
-      const h264Button = document.getElementById('h264Button');
-      const h265Button = document.getElementById('h265Button');
+      const h264_5Button = document.getElementById('h264_5Button');
+      const formatButton = document.getElementById('formatButton');
       const defaultButton = document.getElementById('defaultButton');
       const UrlInput = document.getElementById('UrlInput')
       UrlInput.value = 'https://yuweifeng.top:9211/file/H264AAC.flv/testFMP4.m3u8'; 
       startButton.addEventListener('click', setEnable);
       stopButton.addEventListener('click', setDisable);
-      h264Button.addEventListener('click', setH264);
-      h265Button.addEventListener('click', setH265);
+      h264_5Button.addEventListener('click', setURL);
+      formatButton.addEventListener('click', setFormat);
       defaultButton.addEventListener('click', setDefault);
       var video = document.getElementById('video');
       var hls = null;
-      function setH264() 
+      function setURL() 
       {
-        UrlInput.value = 'https://yuweifeng.top:9211/file/H264AAC.flv/testFMP4.m3u8'; 
+        if (UrlInput.value.indexOf("H264") === -1) 
+        {  
+            UrlInput.value = UrlInput.value.replace("H265", "H264"); 
+        } 
+        else 
+        {  
+            UrlInput.value = UrlInput.value.replace("H264", "H265");  
+        }  
       }
-      function setH265() 
+      function setFormat() 
       {//对于h265,hls.js不支持ts打包方式只支持fmp4，对于音频，hls.js不支持g711a只支持aac
-        UrlInput.value = 'https://yuweifeng.top:9211/file/H265AAC.flv/testFMP4.m3u8'; 
+        if (UrlInput.value.indexOf("FMP4") === -1) 
+        {  
+            UrlInput.value = UrlInput.value.replace("TS", "FMP4"); 
+        } 
+        else 
+        {  
+            UrlInput.value = UrlInput.value.replace("FMP4", "TS");  
+        }  
       }
       function setDefault() 
       {
