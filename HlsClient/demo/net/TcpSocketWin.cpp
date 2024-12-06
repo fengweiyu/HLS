@@ -23,6 +23,7 @@ https://github.com/ZLMediaKit/ZLMediaKit.git/3rdpart/wepoll
 
 //#ifdef _WIN32
 #include <WinSock2.h> //win 没有epoll只有类似的IOCP 
+#include <ws2tcpip.h> 
 
 #include "TcpSocket.h"
 #include "NetAdapter.h"
@@ -34,6 +35,99 @@ using std::cout;
 using std::endl;
 using std::string;
 
+/*****************************************************************************
+-Fuction		: TcpSocket
+-Description	: TcpSocket
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+TcpSocket::TcpSocket()
+{
+}
+
+/*****************************************************************************
+-Fuction		: ~TcpSocket
+-Description	: ~
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+TcpSocket::~TcpSocket()
+{
+}
+
+/*****************************************************************************
+-Fuction		: ~ResolveDomain
+-Description	: ~ResolveDomain
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+int TcpSocket::ResolveDomain(string * i_strDomain,string * o_strIP) 
+{  
+    int iRet = -1;
+    
+	if(i_strDomain==NULL ||o_strIP==NULL)
+	{
+        TCP_LOGE("ResolveDomain NULL\r\n");
+        return iRet;
+	}
+    // 初始化WinSock  
+    WSADATA wsaData;  
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) 
+    {  
+        //std::cerr << "WSAStartup failed: " << WSAGetLastError() << std::endl;  
+        TCP_LOGE("WSAStartup failed:\r\n");
+        return iRet;
+    }  
+
+    struct addrinfo hints, *res = nullptr;  
+    memset(&hints, 0, sizeof(hints));  
+
+    // 设置为IPv4和TCP  
+    hints.ai_family = AF_INET;   
+    hints.ai_socktype = SOCK_STREAM;  
+    
+    // 获取地址信息  
+    int status = getaddrinfo(i_strDomain->c_str(), NULL, &hints, &res);  
+    if (status != 0) 
+    {  
+        //std::cerr << "getaddrinfo error: " << gai_strerror(status) << std::endl;  
+        TCP_LOGE("getaddrinfo error::\r\n");
+        WSACleanup(); // 清理WinSock  
+        return iRet;  
+    }  
+
+    // 遍历结果并打印IP地址  
+    for (struct addrinfo* p = res; p != nullptr; p = p->ai_next) 
+    {  
+        void* addr;  
+        struct sockaddr_in* ipv4 = (struct sockaddr_in*)p->ai_addr;  
+        addr = &(ipv4->sin_addr);  
+
+        char ipstr[INET_ADDRSTRLEN];  
+        inet_ntop(p->ai_family, addr, ipstr, sizeof(ipstr));  
+        //std::cout << "Resolved IP: " << ipstr << std::endl;  
+        TCP_LOGD("Resolved IP: %s\r\n",ipstr);
+        o_strIP->assign(ipstr);
+        iRet = 0;
+    }  
+
+    freeaddrinfo(res); // 释放内存  
+    WSACleanup(); // 清理WinSock  
+
+    return iRet;  
+} 
 
 /*****************************************************************************
 -Fuction		: TcpServer

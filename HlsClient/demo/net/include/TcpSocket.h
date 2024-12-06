@@ -43,6 +43,10 @@ using std::chrono::milliseconds;
 class TcpSocket
 {
 public:
+	TcpSocket();
+	virtual ~TcpSocket();
+    virtual int ResolveDomain(string * i_strDomain,string * o_strIP);
+
 	virtual int Init(string * i_strIP,unsigned short i_wPort)=0;//由于string是深拷贝,不是默认的只拷贝值的那种浅拷贝,所以可以不用指针,可以直接用或用引用均可
 	virtual int Send(char * i_acSendBuf,int i_iSendLen,int i_iSocketFd)=0;
 	virtual int Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int i_iSocketFd,milliseconds *i_pTime=NULL)=0;

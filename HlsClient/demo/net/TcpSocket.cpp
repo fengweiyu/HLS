@@ -27,6 +27,11 @@ TcpServer后续改名TcpServerSelect
 #include <netinet/tcp.h> 
 #include <sys/epoll.h>
 
+#include <sys/types.h>  
+#include <netdb.h>  
+#include <unistd.h> 
+
+
 #include "TcpSocket.h"
 #include "NetAdapter.h"
 
@@ -37,6 +42,93 @@ using std::cout;
 using std::endl;
 using std::string;
 
+/*****************************************************************************
+-Fuction		: TcpSocket
+-Description	: TcpSocket
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+TcpSocket::TcpSocket()
+{
+}
+
+/*****************************************************************************
+-Fuction		: ~TcpSocket
+-Description	: ~
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+TcpSocket::~TcpSocket()
+{
+}
+
+/*****************************************************************************
+-Fuction		: ResolveDomain
+-Description	: ResolveDomain
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+int TcpSocket::ResolveDomain(string * i_strDomain,string * o_strIP) 
+{  
+    int iRet = -1;
+    
+	if(i_strDomain==NULL ||o_strIP==NULL)
+	{
+        TCP_LOGE("ResolveDomain NULL\r\n");
+        return iRet;
+	}
+    struct addrinfo hints, *res;  
+    memset(&hints, 0, sizeof(hints));  
+    
+    // 设置类型为IPv4  
+    hints.ai_family = AF_INET;   
+    hints.ai_socktype = SOCK_STREAM; // TCP  
+
+    // 调用getaddrinfo  
+    int status = getaddrinfo(i_strDomain->c_str(), NULL, &hints, &res);  
+    if (status != 0) 
+    {  
+        //std::cerr << "getaddrinfo error: " << gai_strerror(status) << std::endl;  
+        TCP_LOGE("getaddrinfo error::\r\n");
+        return iRet;  
+    }  
+
+    // 遍历结果  
+    for (struct addrinfo* p = res; p != nullptr; p = p->ai_next) 
+    {  
+        void* addr;  
+        // 获取IPv4地址  
+        struct sockaddr_in* ipv4 = (struct sockaddr_in*)p->ai_addr;  
+        addr = &(ipv4->sin_addr);  
+
+        // 转换为可读的IPv4地址  
+        char ipstr[INET_ADDRSTRLEN];  
+        inet_ntop(p->ai_family, addr, ipstr, sizeof(ipstr));  
+        
+        //std::cout << "Resolved IP: " << ipstr << std::endl;  
+        TCP_LOGD("Resolved IP: %s\r\n",ipstr);
+        o_strIP->assign(ipstr);
+        iRet = 0;
+    }  
+
+    // 释放结果  
+    freeaddrinfo(res); 
+
+
+    return iRet;  
+} 
 
 /*****************************************************************************
 -Fuction		: TcpServer

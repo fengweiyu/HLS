@@ -9,8 +9,8 @@
 * Last Modified         : 	
 * History               : 	
 ******************************************************************************/
-#ifndef HLS_SERVER_IO_H
-#define HLS_SERVER_IO_H
+#ifndef HLS_CLIENT_IO_H
+#define HLS_CLIENT_IO_H
 
 #include "TcpSocket.h"
 #include "HlsClientInf.h"
