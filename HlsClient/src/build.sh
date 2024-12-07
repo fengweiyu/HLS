@@ -74,7 +74,7 @@ function CopyLib()
     fi
     
     cd lib
-    cp $CurPwd/build/lib/libHlsServer.a .
+    cp $CurPwd/build/lib/libHlsClient.a .
 
     cp $CurPwd/include . -rf
 

@@ -21,12 +21,7 @@ else
         mkdir ThirdLib
     fi
     cd -
-    cd media
-    sh build.sh $1 $2/ThirdLib
-    if [ $? -ne 0 ]; then
-        exit -1
-    fi
-    cd ..
+
 
     cd http
     sh build.sh $1 $2/ThirdLib
