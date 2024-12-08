@@ -68,7 +68,7 @@ function CopyExe()
     cd $1
 
     
-    cp $CurPwd/build/HlsClient .
+    cp $CurPwd/build/HlsClientDemo .
 
 #由于对外头文件又依赖内部头文件，所以要拷贝，暂时这么处理后续优化   
 #    cp $CurPwd/*.h .

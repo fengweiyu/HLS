@@ -38,11 +38,17 @@ target_include_directories(HlsClientDemo PUBLIC
     ${PROJECT_SOURCE_DIR}/../src/include
 )
 
-target_link_libraries(HlsClientDemo PUBLIC net HlsClient http
+# target_link_libraries(HlsClientDemo PUBLIC net HlsClient http
 #    ${CMAKE_BINARY_DIR}/demo/net/libnet.a
 #    ${CMAKE_BINARY_DIR}/src/libHttpFlvClient.a
 #    ${CMAKE_BINARY_DIR}/src/ThirdSrc/http/libhttp.a
-) 
+#) 
+target_link_libraries(HlsClientDemo PUBLIC 
+    ${PROJECT_SOURCE_DIR}/../build/linux/${CMAKE_ToolChain}/net/libnet.a
+    ${PROJECT_SOURCE_DIR}/../build/linux/${CMAKE_ToolChain}/lib/libHlsClient.a
+    ${PROJECT_SOURCE_DIR}/../build/linux/${CMAKE_ToolChain}/ThirdLib/http/libhttp.a
+)
+
 
 
 if(WIN32)  
@@ -55,8 +61,8 @@ endif()
 #TARGET_LINK_LIBRARIES(webrtcServer -pthread -lm -lrt -ldl -lresolv -static)
 
 # 设置可执行文件的输出目录  
-#SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build)
+#SET(EXECUTABLE_OUTPUT_PATH CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build)
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build)
  
 # 安装库文件  
 install(TARGETS HlsClientDemo  
